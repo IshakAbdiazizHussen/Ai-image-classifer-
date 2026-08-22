@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# ML data & artifacts — never committed (constraints.md rules 1, 7, 18)
+ml/data/raw/
+ml/data/.cifar10_cache/
+ml/checkpoints/
+ml/artifacts/
+
+# Env files — secrets live here, never in git (constraints.md rule 18)
+.env
+*.env
+!.env.example
+
+# OS
+.DS_Store

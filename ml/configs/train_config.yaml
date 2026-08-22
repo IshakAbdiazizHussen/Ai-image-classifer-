@@ -1,0 +1,59 @@
+# Single source of truth for dataset, split, and training settings.
+# Per constraints.md rule 5, the class list here is the ONLY place classes
+# are defined — export/evaluation/backend/frontend all read it from the
+# split manifest or exported metadata, which are generated from this file.
+#
+# This default config points at a small sample dataset (a CIFAR-10 subset,
+# see ml/data/prepare_sample_dataset.py) so the pipeline is runnable and
+# testable end-to-end right now. Swap `dataset.raw_dir` and `dataset.classes`
+# to point at a real dataset for an actual training run — no code changes
+# required.
+
+dataset:
+  raw_dir: ml/data/raw          # ImageFolder layout: raw_dir/<class_name>/*.png|jpg
+  splits_dir: ml/data/splits    # persisted train/val/test manifest lives here
+  classes:                      # single source of truth for the label set
+    - airplane
+    - automobile
+    - bird
+    - cat
+    - deer
+    - dog
+    - frog
+    - horse
+    - ship
+    - truck
+  split_ratios:                 # must sum to 1.0
+    train: 0.6
+    val: 0.2
+    test: 0.2
+  image_size: 224                # resize target (matches the pretrained backbone)
+
+seed: 1337                       # fixed seed for split + shuffling + model init
+
+model:
+  backbone: mobilenet_v3_small   # torchvision transfer-learning backbone
+  pretrained: true
+
+training:
+  batch_size: 32
+  epochs: 3                      # smoke-test default; raise for a real run
+                                  # (tested up to 8 on the 36-img/class
+                                  # sample split — it overfits past ~epoch 3
+                                  # since there's so little training data;
+                                  # a real dataset needs its own tuning)
+  learning_rate: 0.001
+  num_workers: 2
+  device: auto                   # auto | cpu | mps | cuda
+
+checkpoints_dir: ml/checkpoints
+
+evaluation:
+  # A model export is only promotable for serving if its held-out test
+  # accuracy clears this. This default is sized for the small sample
+  # dataset/short smoke-test run (10 classes, random baseline = 10%) — set
+  # a threshold appropriate to your actual dataset/use case before a real
+  # training run.
+  min_test_accuracy: 0.55
+
+artifacts_dir: ml/artifacts
