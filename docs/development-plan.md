@@ -272,31 +272,45 @@ constraints.md, and development-plan.md — before you build this phase.
 
 ### Implementation
 
-- [ ] `core/config.py`, `core/database.py`, `core/redis.py`,
+- [x] `core/config.py`, `core/database.py`, `core/redis.py`,
       `core/logging.py` — environment-based settings, DB session, Redis
       client, structured logging setup.
-- [ ] `models/prediction.py` — `PredictionRecord` SQLAlchemy model
+- [x] `models/prediction.py` — `PredictionRecord` SQLAlchemy model
       (id, image_hash, predicted_label, confidence, probabilities,
       model_version, inference_latency_ms, created_at).
-- [ ] Alembic setup and initial migration creating the `PredictionRecord`
+- [x] Alembic setup and initial migration creating the `PredictionRecord`
       table.
-- [ ] `schemas/predict.py` — request/response schemas for `/predict`,
+- [x] `schemas/predict.py` — request/response schemas for `/predict`,
       `schemas/history.py` for paginated `/history`.
-- [ ] `services/inference_service.py` — loads the promoted ONNX model +
+- [x] `services/inference_service.py` — loads the promoted ONNX model +
       class list + preprocessing spec from `ml/artifacts/<MODEL_VERSION>/`
       once at startup; exposes a `predict(image_bytes)` function.
-- [ ] `services/prediction_service.py` — persists and reads
+- [x] `services/prediction_service.py` — persists and reads
       `PredictionRecord` rows (paginated).
-- [ ] `services/rate_limit.py` — Redis-backed per-IP rate limiter,
+- [x] `services/rate_limit.py` — Redis-backed per-IP rate limiter,
       applied as a dependency on `/predict`.
-- [ ] Redis caching in `/predict`: check `predict:{model_version}:{image_hash}`
+- [x] Redis caching in `/predict`: check `predict:{model_version}:{image_hash}`
       before running inference; write through on a miss.
-- [ ] `routers/predict.py` — `POST /predict`.
-- [ ] `routers/history.py` — `GET /history` (paginated).
-- [ ] `routers/health.py` — `GET /healthz` reporting DB, Redis, and
+- [x] `routers/predict.py` — `POST /predict`.
+- [x] `routers/history.py` — `GET /history` (paginated).
+- [x] `routers/health.py` — `GET /healthz` reporting DB, Redis, and
       model-loaded status.
-- [ ] Dependencies on previous phases: requires a promoted, versioned
+- [x] Dependencies on previous phases: requires a promoted, versioned
       model artifact and its `metadata.json` from Phase 2.
+
+> **Status: complete.** Local dev/test infra: Postgres and Redis run as
+> throwaway Docker containers (`imgclf-postgres` on host port 5433,
+> `imgclf-redis` on 6380 — both remapped off their defaults since this
+> machine already has a native Postgres and another project's Redis
+> container on the standard ports). `backend/models/prediction.py` +
+> Alembic produced one migration (`bf2888c169ab`), verified
+> upgrade→downgrade→upgrade against the real container. Both `redis_client`
+> and the DB session are exposed as FastAPI dependencies
+> (`get_redis_client`/`get_db`), not imported as bare singletons in
+> routers — needed for tests to isolate the cache/DB, and generally the
+> more testable pattern. `ml.preprocessing.apply_preprocessing` is
+> imported directly by `inference_service.py` (no reimplementation),
+> satisfying rule 10 for real rather than by convention.
 
 ### Quality Assurance
 
@@ -315,6 +329,23 @@ constraints.md, and development-plan.md — before you build this phase.
   `/predict` and `/history` work end-to-end against a real running
   Postgres/Redis, rate limiting and caching both function as designed, and
   no secret or raw image data appears in logs.
+
+**Verified:** 16/16 backend tests pass (`inference_service` against the
+real Phase 2 artifact — correctly predicts "cat" on a known sample;
+`rate_limit` allows-to-limit/rejects-over-limit/tracks-clients-
+independently; `prediction_service` cache hit/miss and `model_version`
+cache-key isolation; full `/predict` endpoint tests — wrong content-type
+→ 400, oversized upload → 413, corrupt bytes with a spoofed content-type
+→ 400 without reaching the model, a real upload → 200 with the correct
+shape, second identical upload → `cached: true`; `/healthz` → all
+dependencies true). Manual run against the live containerized Postgres/
+Redis: real `curl` uploads of a cat and a dog image both classified
+correctly (97.7% confidence on the dog); rate limit fired exactly at
+30 requests/minute (30×200, then 429s); `/history` paginated correctly;
+tailed server logs are one-JSON-object-per-line with `request_id`,
+`image_hash`, `model_version`, `predicted_label` — no raw image bytes, no
+secrets, anywhere. Full combined suite (`ml/tests/` + `backend/tests/`):
+**31/31 passing.**
 
 ---
 
