@@ -401,25 +401,42 @@ constraints.md, and development-plan.md — before you build this phase.
 
 ### Implementation
 
-- [ ] Scaffold the Next.js app (TypeScript, base layout, global styles).
-- [ ] `lib/api/` — typed client for `POST /predict` and `GET /history`,
+- [x] Scaffold the Next.js app (TypeScript, base layout, global styles).
+- [x] `lib/api/` — typed client for `POST /predict` and `GET /history`,
       reading the backend base URL from an environment variable.
-- [ ] `components/UploadForm` — file picker with client-side type/size
+- [x] `components/UploadForm` — file picker with client-side type/size
       check, submit handler.
-- [ ] `components/ResultCard` — renders predicted label + confidence from
+- [x] `components/ResultCard` — renders predicted label + confidence from
       an API response.
-- [ ] `components/ProbabilityChart` — renders per-class probabilities from
+- [x] `components/ProbabilityChart` — renders per-class probabilities from
       an API response.
-- [ ] `components/HistoryTable` — renders a paginated list from
+- [x] `components/HistoryTable` — renders a paginated list from
       `/history`.
-- [ ] `app/upload/` — page wiring `UploadForm` → `/predict` →
+- [x] `app/upload/` — page wiring `UploadForm` → `/predict` →
       `ResultCard`/`ProbabilityChart`.
-- [ ] `app/history/` — page wiring paginated `/history` fetch →
+- [x] `app/history/` — page wiring paginated `/history` fetch →
       `HistoryTable`.
-- [ ] Baseline error/loading states for both pages (network error, server
+- [x] Baseline error/loading states for both pages (network error, server
       validation error, empty history).
-- [ ] Dependencies on previous phases: requires the running backend from
+- [x] Dependencies on previous phases: requires the running backend from
       Phase 3 and its actual `/predict`/`/history` response shapes.
+
+> **Status: complete — with one real bug found and fixed.**
+> Browser-driven testing (Playwright, headless Chromium — `chromium-cli`
+> wasn't available, so a small driver script was used instead) caught
+> something `curl`-only testing in Phase 3 couldn't: the backend had no
+> CORS policy, so the browser silently blocked every `fetch` from
+> `localhost:3000` to `localhost:8000`. Fixed by adding `CORSMiddleware`
+> to `backend/main.py`, configured via a new `CORS_ORIGINS` env var
+> (`core/config.py`) rather than hardcoded — and locked in with a
+> regression test (`backend/tests/test_cors.py`) so it can't silently
+> regress. Also hit and fixed along the way: `react-hooks/set-state-in-
+> effect` lint error in `app/history/page.tsx` (restructured the fetch
+> into a named async function inside the effect rather than calling
+> `setState` as the first statement), a corrupted `@next/swc-darwin-
+> arm64` native binary that broke `next build` (reinstalled), and a
+> `next.config.ts` `turbopack.root` warning from an unrelated lockfile
+> elsewhere on disk (pinned explicitly).
 
 ### Quality Assurance
 
@@ -437,6 +454,27 @@ constraints.md, and development-plan.md — before you build this phase.
   prediction, and browse paginated history, entirely through the UI
   against the real backend, with no hardcoded class names or backend URLs
   anywhere in the frontend code.
+
+**Verified:** 7/7 Vitest component tests pass (`ResultCard` renders
+label/confidence/model version and the cached-vs-latency distinction from
+props; `ProbabilityChart` renders one row per class, sorted, entirely
+from props — including a class name never seen before, proving no
+hardcoded list; `UploadForm` surfaces a mocked server rejection via
+`role="alert"` without calling `onPredicted`, rejects an unsupported type
+client-side without calling `onSubmit`, and calls through correctly on
+success). `next build` and `eslint` both clean. Real browser run (backend
++ frontend + the Phase 3 Postgres/Redis containers, all actually running):
+uploaded a real sample image through the UI — got a rendered result card
+and a 10-row probability chart matching the live model (a `dog` image
+scored 42.4% Cat / 37.3% Dog, consistent with Phase 2's disclosed 53.3%
+test accuracy — not a frontend bug); history page correctly showed 20
+total predictions across 2 pages, and clicking Next/Previous actually
+changed the rendered rows and correctly disabled Next on the last page;
+pointing `NEXT_PUBLIC_API_URL` at a deliberately wrong port (9999) and
+restarting made the browser's actual network requests follow it there,
+proving no hardcoded backend URL exists anywhere in the frontend; zero
+browser console errors throughout. Screenshots taken at each step during
+verification (not committed — verification artifacts, not app code).
 
 ---
 

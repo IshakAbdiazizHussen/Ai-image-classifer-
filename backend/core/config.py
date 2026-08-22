@@ -32,5 +32,14 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 30
     max_upload_bytes: int = 5 * 1024 * 1024  # 5 MB
 
+    # Comma-separated allowed browser origins for the frontend to call
+    # this API from (CORS). Never "*" with credentials, and never
+    # hardcoded in main.py — configured here like everything else.
+    cors_origins: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
 
 settings = Settings()

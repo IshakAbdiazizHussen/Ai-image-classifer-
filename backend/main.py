@@ -12,6 +12,7 @@ import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from backend.core.config import settings
 from backend.core.logging import request_id_var, setup_logging
@@ -38,6 +39,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Image Classifier API", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(predict.router)
 app.include_router(history.router)
