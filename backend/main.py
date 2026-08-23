@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.core.config import settings
+from backend.core.errors import register_exception_handlers
 from backend.core.logging import request_id_var, setup_logging
 from backend.core.redis import redis_client
 from backend.routers import health, history, predict
@@ -39,6 +40,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Image Classifier API", lifespan=lifespan)
+
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,

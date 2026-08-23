@@ -77,11 +77,22 @@ services:
       migrate:
         condition: service_completed_successfully
     healthcheck:
+      # /healthz returns 503 (not 200) when a dependency is down — this
+      # explicitly checks the status code rather than relying on
+      # urlopen()'s HTTPError-on-non-2xx behavior to accidentally exit
+      # non-zero (Phase 6: verified this actually flips to "unhealthy"
+      # when Redis/DB are stopped, not just when the process is down).
       test:
         - "CMD"
         - "python"
         - "-c"
-        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz', timeout=3).status == 200 else 1)"
+        - |
+          import urllib.request, urllib.error, sys
+          try:
+              resp = urllib.request.urlopen("http://localhost:8000/healthz", timeout=3)
+              sys.exit(0 if resp.status == 200 else 1)
+          except (urllib.error.HTTPError, OSError):
+              sys.exit(1)
       interval: 10s
       timeout: 5s
       retries: 5

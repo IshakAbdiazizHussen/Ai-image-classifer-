@@ -52,7 +52,14 @@ export class ApiError extends Error {
 
 async function readErrorMessage(response: Response): Promise<string> {
   try {
-    const body = (await response.json()) as { detail?: unknown };
+    // Backend's standardized error shape (Phase 6): {"error": {"code",
+    // "message"}}. `detail` is kept as a fallback for resilience, though
+    // every backend error now goes through the standardized shape.
+    const body = (await response.json()) as {
+      error?: { message?: unknown };
+      detail?: unknown;
+    };
+    if (typeof body.error?.message === "string") return body.error.message;
     if (typeof body.detail === "string") return body.detail;
     return JSON.stringify(body);
   } catch {

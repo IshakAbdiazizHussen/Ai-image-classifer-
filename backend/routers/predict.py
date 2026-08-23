@@ -8,16 +8,17 @@ import hashlib
 import logging
 
 import redis as redis_lib
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, Request, UploadFile, status
 from sqlalchemy.orm import Session
 
 from backend.core.config import settings
 from backend.core.database import get_db
+from backend.core.errors import APIError
 from backend.core.redis import get_redis_client
 from backend.schemas.predict import PredictResponse
 from backend.services import prediction_service
 from backend.services.inference_service import InferenceService
-from backend.services.rate_limit import RateLimitExceeded, RateLimiter
+from backend.services.rate_limit import RateLimitExceeded, RateLimiter, RateLimiterUnavailable
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -46,27 +47,43 @@ async def predict(
     try:
         rate_limiter.check(client_id)
     except RateLimitExceeded as exc:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=str(exc)
+        raise APIError(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            "rate_limited",
+            str(exc),
+            headers={"Retry-After": str(exc.retry_after_seconds)},
+        ) from exc
+    except RateLimiterUnavailable as exc:
+        # Fails CLOSED (constraints.md rule 21) — a clean 503, not a
+        # crash/hang, and not silently letting the request through.
+        raise APIError(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            "rate_limiter_unavailable",
+            "Rate limiter is temporarily unavailable. Try again shortly.",
         ) from exc
 
     if file.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type '{file.content_type}'. "
+        raise APIError(
+            status.HTTP_400_BAD_REQUEST,
+            "unsupported_file_type",
+            f"Unsupported file type '{file.content_type}'. "
             f"Allowed: {sorted(ALLOWED_CONTENT_TYPES)}.",
         )
 
     image_bytes = await file.read()
     if len(image_bytes) > settings.max_upload_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"File exceeds the {settings.max_upload_bytes}-byte limit.",
+        raise APIError(
+            status.HTTP_413_CONTENT_TOO_LARGE,
+            "payload_too_large",
+            f"File exceeds the {settings.max_upload_bytes}-byte limit.",
         )
 
     image_hash = hashlib.sha256(image_bytes).hexdigest()
     model_version = inference_service.model_version
 
+    # Fails OPEN (a cache-read error is treated as a miss) — see
+    # services/prediction_service.py's module docstring for why this and
+    # the rate limiter make opposite choices.
     cached = prediction_service.get_cached_prediction(
         redis_client, model_version, image_hash
     )
@@ -80,8 +97,8 @@ async def predict(
     try:
         result = inference_service.predict(image_bytes)
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)
+        raise APIError(
+            status.HTTP_400_BAD_REQUEST, "invalid_image", str(exc)
         ) from exc
 
     prediction_service.save_prediction(

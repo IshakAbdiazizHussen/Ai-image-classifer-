@@ -12,3 +12,10 @@ class HealthResponse(BaseModel):
     redis: bool
     model_loaded: bool
     model_version: str | None
+    # None = no evaluation_report.json found for this version (can't say);
+    # True/False = what that report's own meets_threshold said
+    # (constraints.md rule 8). Surfaced honestly rather than silently
+    # served — does NOT flip `status` to degraded on its own, since
+    # serving a known sub-threshold model is a deliberate operator choice
+    # (e.g. a demo dataset), not an outage.
+    model_promotable: bool | None

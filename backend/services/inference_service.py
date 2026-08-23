@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,8 @@ import onnxruntime
 from PIL import Image, UnidentifiedImageError
 
 from ml.preprocessing import apply_preprocessing
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -49,6 +52,43 @@ class InferenceService:
         self.preprocessing_spec = self.metadata["preprocessing"]
         self.session = onnxruntime.InferenceSession(str(artifact_dir / "model.onnx"))
         self.input_name = self.session.get_inputs()[0].name
+
+        # constraints.md rule 8: "a failing export is never wired in" — an
+        # unenforced version of that rule is really just documentation, so
+        # this checks the artifact's own evaluation_report.json (if
+        # export/evaluate.py produced one) and makes the result loud and
+        # visible (startup log + /healthz's model_promotable field)
+        # instead of silent. It does not refuse to start: for a demo/dev
+        # deployment serving a known sub-threshold model can be a
+        # deliberate choice — the point is that choice must be visible,
+        # never quiet.
+        self.meets_threshold: bool | None = self._load_promotion_status(artifact_dir)
+
+    def _load_promotion_status(self, artifact_dir: Path) -> bool | None:
+        report_path = artifact_dir / "evaluation_report.json"
+        if not report_path.is_file():
+            logger.warning(
+                "no evaluation_report.json found for this model version — "
+                "promotion status unknown (was ml/export/evaluate.py ever run?)",
+                extra={"model_version": self.model_version},
+            )
+            return None
+
+        with report_path.open("r") as f:
+            report = json.load(f)
+        meets_threshold = bool(report.get("meets_threshold"))
+
+        if not meets_threshold:
+            logger.warning(
+                "serving a model version that did NOT clear its own "
+                "accuracy threshold — this is allowed but must not be silent",
+                extra={
+                    "model_version": self.model_version,
+                    "test_accuracy": report.get("test_accuracy"),
+                    "min_test_accuracy": report.get("min_test_accuracy"),
+                },
+            )
+        return meets_threshold
 
     def predict(self, image_bytes: bytes) -> PredictionResult:
         start = time.perf_counter()

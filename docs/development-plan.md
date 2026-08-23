@@ -666,22 +666,83 @@ constraints.md, and development-plan.md — before you build this phase.
 
 ### Implementation
 
-- [ ] Tune rate-limit thresholds on `/predict` for a realistic demo/load
+- [x] Tune rate-limit thresholds on `/predict` for a realistic demo/load
       profile; confirm the limiter fails safe (rejects cleanly) if Redis
       is briefly unavailable.
-- [ ] Ensure every backend service logs through the shared structured
+- [x] Ensure every backend service logs through the shared structured
       (JSON) logger with a request ID, replacing any ad-hoc logging left
       from earlier phases.
-- [ ] Standardize error response shape (status code, error code/message)
+- [x] Standardize error response shape (status code, error code/message)
       across `/predict`, `/history`, and `/healthz`; update the frontend's
       error handling to match.
-- [ ] Confirm `/healthz` correctly reports unhealthy when DB or Redis is
+- [x] Confirm `/healthz` correctly reports unhealthy when DB or Redis is
       down, not just when the process is up.
-- [ ] Run a full rule-by-rule pass over [constraints.md](constraints.md)
+- [x] Run a full rule-by-rule pass over [constraints.md](constraints.md)
       (all 29 rules) against the running, containerized system; fix or
       explicitly document any gap found.
-- [ ] Dependencies on previous phases: requires the fully integrated,
+- [x] Dependencies on previous phases: requires the fully integrated,
       containerized stack from Phase 5.
+
+> **Status: complete — three real bugs found and fixed by re-verifying
+> against the running system instead of trusting earlier phases' QA.**
+>
+> 1. **`/healthz` never actually returned a non-200 status.** It computed
+>    `status: "degraded"` in the JSON body but always responded HTTP 200
+>    — meaning nothing watching the status code (including our own
+>    Docker healthcheck) could ever detect a real outage. Fixed by
+>    setting `response.status_code = 503` when unhealthy, and rewired the
+>    Docker healthcheck to check the status code explicitly rather than
+>    relying on `urlopen`'s `HTTPError`-on-non-2xx behavior accidentally
+>    doing the right thing. **Verified for real**: stopped
+>    `imageclassifier-redis-1` → `/healthz` returned 503 immediately, and
+>    after the healthcheck's retry window Docker itself flipped the
+>    container to `(unhealthy)`; restarted Redis → automatic recovery to
+>    `(healthy)`, no manual intervention. Repeated the same for the `db`
+>    container with the same result.
+> 2. **The rate limiter and prediction cache both had no defined
+>    behavior when Redis itself was unreachable** — a bare `redis.incr()`/
+>    `.get()`/`.set()` would have raised an unhandled exception. Given
+>    these two Redis-backed things serve different purposes, they now
+>    fail in opposite, deliberate directions: the rate limiter (an abuse-
+>    control gate) fails CLOSED — `RateLimiterUnavailable` → a clean 503,
+>    never silently unlimited — while the prediction cache (a pure
+>    optimization) fails OPEN — logs a warning and degrades to a cache
+>    miss / no-op write, never taking `/predict` down over lost caching.
+>    **Verified for real**: stopped Redis, hit `/predict` → clean
+>    `{"error":{"code":"rate_limiter_unavailable",...}}` at 503, not a
+>    crash or hang.
+> 3. **The exception-handler registration for the standardized error
+>    shape missed Starlette's own routing-level errors** (e.g. an
+>    unmatched route's 404) because it was registered against FastAPI's
+>    `HTTPException` subclass rather than Starlette's base class that
+>    routing actually raises — caught by the new test suite itself
+>    (`test_not_found_error_shape_on_unknown_route` failed on first run),
+>    not by manual inspection. Fixed by registering against
+>    `starlette.exceptions.HTTPException`; `APIError`'s own more specific
+>    handler still wins for anything raised through it (exact-type
+>    match beats the walked-up MRO fallback).
+>
+> Also added, beyond the phase's literal checklist, because the rule-by-
+> rule review (below) surfaced it as a real gap: **rule 8 ("a failing
+> export is never wired in") was unenforced and silent** — the model
+> version actually being served this whole time is the one Phase 2
+> explicitly marked NOT PROMOTABLE (53.3% vs. a 55% threshold), and
+> nothing said so anywhere a person would see it. `InferenceService` now
+> reads the artifact's own `evaluation_report.json` at startup, logs a
+> loud warning if `meets_threshold` is false, and `/healthz` gained a
+> `model_promotable` field surfacing it honestly — without flipping
+> overall `status` to degraded, since knowingly serving a demo-scale
+> model is a deliberate operator choice, not an outage. **Verified**:
+> the real startup log and `/healthz` response for the live artifact
+> both correctly show `model_promotable: false` with the actual numbers
+> (0.533 vs. 0.55) — confirmed against the real file, not asserted.
+>
+> New `Retry-After` header on 429s (computed from the actual seconds
+> left in the current fixed window) — a small but genuine correctness
+> improvement for anything that respects standard rate-limit semantics.
+> Rate limit itself stayed at 30 req/min: generous enough for a live demo
+> session, bounded enough to stop a scripted flood — a deliberate choice,
+> not an arbitrary one just to appear "tuned."
 
 ### Quality Assurance
 
@@ -698,3 +759,69 @@ constraints.md, and development-plan.md — before you build this phase.
   rule by rule against the real running system, all failure-mode checks
   behave as designed, and the project matches every success criterion in
   [project-definition.md](project-definition.md).
+
+**Verified:** 55/55 tests passing (48 ML+backend, 7 frontend) — 17 new in
+this phase: rate limiter fail-closed + `Retry-After` bounds
+(`test_rate_limit.py`), cache fail-open on read/write
+(`test_prediction_cache.py`), `/healthz` 200-vs-503 across three
+dependency states (`test_health.py`), standardized error shape across
+seven distinct failure paths including the 404 bug the suite itself
+caught (`test_error_handling.py`), and the promotion-status logic
+against both the real artifact and a synthetic no-report case
+(`test_inference_service.py`). `next build`/`eslint` both clean.
+
+Manual verification against the **real containerized stack** (rebuilt,
+not just restarted, so every change above was actually exercised):
+stopped Redis mid-run → `/healthz` 503 immediately, Docker's own
+healthcheck flipped to `(unhealthy)` after its retry window, `/predict`
+returned a clean 503 rather than hanging or crashing; restarted Redis →
+full automatic recovery, no intervention, confirmed via both the API and
+`docker compose ps`. Stopped the DB → same `/healthz` 503 behavior;
+`/predict` in this state returns a clean standardized 500 (DB
+persistence is a hard dependency here, deliberately — unlike the cache)
+with the full traceback confirmed logged server-side as structured JSON
+and *only* a generic message reaching the client. Burst-tested 35
+requests → 30×200 then 429s with `Retry-After`, exactly as configured.
+Re-grepped all accumulated container logs across this entire session for
+`password|secret|token` and for base64-looking image data — clean.
+Confirmed `.env`/`.env.local` are still untracked in git and that
+neither built image contains a copied-in `.env*` file. Confirmed in the
+browser (Playwright) that a real server-side error
+(`{"error":{"code":"invalid_image","message":"..."}}`) renders correctly
+through the frontend's updated error parsing.
+
+**Full constraints.md rule-by-rule review** (rule 29's own requirement —
+every rule re-verified against the running system in this phase, not
+assumed from earlier phases' QA):
+
+| # | Rule (short) | Status | Evidence |
+|---|---|---|---|
+| 1 | Raw dataset never in git, path via config | PASS | `ml/data/raw/` git-ignored; `dataset.raw_dir` in `train_config.yaml` |
+| 2 | Splits created once, deterministic, persisted | PASS | `build_or_load_split` reuses `manifest.json`; tested |
+| 3 | Augmentation train-only | PASS | `get_transforms` differs by split; tested |
+| 4 | Seeds fixed/documented | PASS | `seed: 1337` in config, used throughout |
+| 5 | Class labels defined once | PASS | `dataset.classes` → `metadata.json` → backend → frontend, one path |
+| 6 | Run config recorded with checkpoint | PASS | `train.py` copies `config.yaml` + `metrics.json` per run |
+| 7 | Versioned artifacts, never overwritten | PASS | `export_model` raises `FileExistsError` on collision; tested |
+| 8 | Failing export never silently wired in | **FIXED** | Was unenforced/silent (see above) — now loud at startup + `/healthz` |
+| 9 | Eval metrics on held-out test split only | PASS | `load_test_entries` reads only `manifest["test"]`; tested |
+| 10 | Preprocessing byte-for-byte, defined once | PASS | `ml/preprocessing.py` imported by dataset.py, evaluate.py, and the backend |
+| 11 | No business logic in routers | PASS | Reviewed all three routers — parsing/shaping only |
+| 12 | ORM only, no raw SQL interpolation | PASS | Only a static literal `text("SELECT 1")` health ping, no interpolation |
+| 13 | Alembic for all schema changes | PASS | One migration, verified up/down/up in Phase 3 |
+| 14 | Pydantic + explicit upload checks | PASS | Content-type/size checked explicitly; responses are Pydantic |
+| 15 | Every prediction includes `model_version` | PASS | `PredictResponse.model_version`, always set |
+| 16 | List endpoints paginated | PASS | `/history` page/page_size, validated bounds |
+| 17 | Model loaded once, concurrency-safe | PASS | `InferenceService` built once in `lifespan`; onnxruntime sessions are concurrency-safe |
+| 18 | Env-var-only secrets, `.env` git-ignored | PASS | Re-verified: not tracked, no image contains one, `.env.example` complete |
+| 19 | Upload validated, never reaches model if invalid | PASS | Type + size checked before decode; corrupt bytes rejected pre-inference; tested |
+| 20 | No auth in v1, documented | PASS (by design) | Documented here, in constraints.md, and project-definition.md |
+| 21 | `/predict` rate-limited | PASS, **improved** | 30/min, fail-closed, `Retry-After` header, tested at/beyond limit |
+| 22 | No raw image bytes/secrets in logs | PASS | Re-grepped all session logs — clean |
+| 23 | No hardcoded frontend API URL | PASS | `NEXT_PUBLIC_API_URL`; proven in Phase 4 by pointing it at a wrong port |
+| 24 | Client validation is UX-only | PASS | Server re-validates independently; tested |
+| 25 | Shared components prop-driven | PASS | Tested with a class name never seen before (Phase 4) |
+| 26 | Business-logic phases have test coverage | PASS | 55/55 across ML, backend, frontend |
+| 27 | Structured JSON logging with request IDs | PASS | Every log line, re-confirmed across all failure-mode tests this phase |
+| 28 | Health check accurate, not just liveness | **FIXED** | Was always-200 regardless of body (see above) — now 503 when degraded |
+| 29 | Full explicit review before calling it done | **this table** | Every rule above re-verified against the running system, this phase |
