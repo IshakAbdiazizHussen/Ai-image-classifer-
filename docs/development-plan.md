@@ -532,20 +532,43 @@ constraints.md, and development-plan.md — before you build this phase.
 
 ### Implementation
 
-- [ ] `backend/Dockerfile` — builds the FastAPI service.
-- [ ] `frontend/Dockerfile` — builds the Next.js app.
-- [ ] `docker-compose.yml` — `frontend`, `backend`, `db` (Postgres,
+- [x] `backend/Dockerfile` — builds the FastAPI service.
+- [x] `frontend/Dockerfile` — builds the Next.js app.
+- [x] `docker-compose.yml` — `frontend`, `backend`, `db` (Postgres,
       named volume), `redis`, with `backend` depending on healthy `db`
       and `redis`.
-- [ ] Mount `ml/artifacts/` read-only into the `backend` container; wire
+- [x] Mount `ml/artifacts/` read-only into the `backend` container; wire
       `MODEL_VERSION` via env so the container serves the correct promoted
       model.
-- [ ] `.env.example` covering every variable consumed by any service.
-- [ ] Wire Alembic migrations to run (or be run) against the `db` service
+- [x] `.env.example` covering every variable consumed by any service.
+- [x] Wire Alembic migrations to run (or be run) against the `db` service
       as part of bringing the stack up.
-- [ ] Dependencies on previous phases: requires the working backend
+- [x] Dependencies on previous phases: requires the working backend
       (Phase 3), frontend (Phase 4), and a promoted model artifact
       (Phase 2).
+
+> **Status: complete.** `backend/Dockerfile` builds from `python:3.13-
+> slim`, copies only `backend/` and the two files the backend actually
+> imports from `ml/` (`__init__.py`, `preprocessing.py`) — no torch/
+> torchvision, no dataset, no baked-in artifact (738MB image; would be
+> multiple GB with the training stack included). `frontend/Dockerfile` is
+> a 3-stage `node:22-alpine` build; `NEXT_PUBLIC_API_URL` is a build ARG
+> (not a runtime env var) since Next.js inlines `NEXT_PUBLIC_*` into the
+> client bundle at build time — and it has to be a browser-reachable URL
+> (`localhost:8000`), not the in-network service name `backend`, since
+> the fetch happens in the user's browser, not inside the compose
+> network. A one-shot `migrate` service runs `alembic upgrade head`
+> against `db` and exits; `backend` depends on it via
+> `condition: service_completed_successfully`. Root `.env`/`.env.example`
+> now carry both the local-process variables (Phase 3's `DATABASE_URL`/
+> `REDIS_URL` pointing at `localhost:5433`/`6380`) and the compose-only
+> `POSTGRES_USER`/`PASSWORD`/`DB` (compose builds its own `DATABASE_URL`/
+> `REDIS_URL` from these using the `db`/`redis` service hostnames) — kept
+> clearly commented so the two workflows don't get confused. Hit and
+> fixed along the way: `frontend/package-lock.json` had drifted out of
+> sync with `package.json` (from earlier ad-hoc `--no-save` installs
+> during Phase 4 debugging), which `npm ci` in the Docker build correctly
+> refused to paper over — fixed with a full clean reinstall.
 
 ### Quality Assurance
 
@@ -561,6 +584,30 @@ constraints.md, and development-plan.md — before you build this phase.
   `docker compose up` with no manual steps beyond `.env`, and the full
   upload → predict → history workflow works against the containerized
   stack exactly as it did against local processes in Phases 3–4.
+
+**Verified:** `docker compose build` succeeds for all three images
+(`backend`, `frontend`, `migrate`); `docker compose up -d` brings up all
+four services in the correct dependency order — `db`/`redis` healthy →
+`migrate` runs and exits 0 → `backend` becomes healthy → `frontend`
+starts — confirmed via `docker compose ps` (all four `Up ... (healthy)`).
+`/healthz` on the containerized backend reports
+`{"status":"ok","database":true,"redis":true,"model_loaded":true}`.
+Real browser run (Playwright) against the fully containerized stack: a
+horse image uploaded through `localhost:3000` → correctly classified at
+99.8% confidence, zero console errors; history correctly showed the
+accumulated predictions. `docker compose down` (no `-v`) then
+`docker compose up -d` again: identical healthy startup, and the named
+`db_data` volume correctly preserved prior predictions across the cycle
+(proven by `/history` returning the same rows post-restart) — migration
+re-ran cleanly against the already-migrated DB. Confirmed
+`ml/artifacts/` is genuinely bind-mounted, not baked in (`touch` inside
+the container correctly fails with "Read-only file system"), and that
+`db`/`redis` are not published to the host (`docker compose ps` shows
+`5432/tcp`/`6379/tcp` with no `0.0.0.0->` host mapping, only `backend`/
+`frontend` are). Full `ml/tests/` + `backend/tests/` suite (32 tests)
+re-run against the separate Phase 3 dev containers and still green,
+confirming the Docker Compose work didn't disturb the local-process
+workflow.
 
 ---
 

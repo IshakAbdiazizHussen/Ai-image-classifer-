@@ -1,0 +1,20 @@
+# Backend build context (docker-compose.yml: context: .)
+.venv/
+frontend/
+.git/
+docs/
+__pycache__/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# Never bake the dataset, checkpoints, or model artifacts into an image —
+# artifacts are bind-mounted read-only at runtime (see backend/Dockerfile).
+ml/data/raw/
+ml/data/.cifar10_cache/
+ml/checkpoints/
+ml/artifacts/
+
+.env
+*.env
+!.env.example
