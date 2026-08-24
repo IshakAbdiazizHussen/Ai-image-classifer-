@@ -125,3 +125,72 @@ reads its configuration from environment variables (via `.env`, git-ignored,
 with an `.env.example` documenting required keys); `backend` and `db`/`redis`
 expose healthchecks that `docker compose` waits on before starting
 dependents.
+
+## Local Development: Two Postgres Instances
+
+Development on this project has actually run **two independent Postgres
+containers**, not one — worth being explicit about, since they hold
+different data and nothing about their names makes that obvious:
+
+- **`imgclf-postgres` (host port 5433)** — a throwaway container created
+  during Phase 3 as local dev/test infrastructure, used when running the
+  backend as a local process (`.venv`, `uvicorn` directly) and by
+  `pytest` (`backend/tests/`) via the root `.env`'s `DATABASE_URL`. This
+  is what the automated test suite talks to.
+- **The `db` service in `docker-compose.yml`** (container name
+  `imageclassifier-db-1` when running, no host-published port) — the
+  real database backing the actual running application at
+  `localhost:8000` / `localhost:3000` when the stack is brought up via
+  `docker compose up`.
+
+**These are not synchronized and will diverge** — a prediction made
+through the containerized app (`localhost:3000`) does not appear in
+`imgclf-postgres`, and a `pytest` run does not affect the compose stack's
+data. Confirmed by direct query during a database audit: at one point
+these held 22 and 26 rows respectively, despite both being labeled
+`image-classifier` internally.
+
+**The `db` service (`imageclassifier-db-1`) is authoritative** — it's
+what a real user or reviewer interacting with the running app actually
+sees. `imgclf-postgres` exists only to let the backend and its test
+suite run as local processes without needing the full container stack up
+— genuinely convenient for fast local iteration during backend
+development (`pytest`, or `uvicorn --reload` for quick manual checks),
+and still fine to keep for that purpose. If local-process development on
+the backend is no longer part of your workflow, it's safe to remove:
+
+```bash
+docker stop imgclf-postgres imgclf-redis
+docker rm imgclf-postgres imgclf-redis
+```
+
+Removing it does not affect the `docker compose` stack or its data in
+any way — the two have never shared anything beyond a coincidentally
+identical database name.
+
+## Backup and Data Durability
+
+**No automated backup strategy exists for the `db_data` volume.** This is
+a dev-scale reference project (see project-definition.md's Scope) — no
+SLA, no retention policy, no tested disaster-recovery process. Prediction
+history is a log of past demo predictions, not data anyone depends on
+being durable; losing it means re-uploading a few images, not a real
+incident. `docker compose down -v` (see `docker-compose.yml`'s comment
+on `db_data`) will destroy it permanently, with no way to recover it
+after the fact.
+
+If you want to manually snapshot data before a risky operation (e.g.
+before running `down -v`, or before a schema experiment), a plain
+`pg_dump`/`pg_restore` is all this needs — there's nothing project-
+specific about it:
+
+```bash
+# Snapshot, while the stack is running:
+docker compose exec db pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" > backup.sql
+
+# Restore into a (fresh or existing) database:
+docker compose exec -T db psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" < backup.sql
+```
+
+`$POSTGRES_USER`/`$POSTGRES_DB` are the same values already in your
+`.env` (see `.env.example`).

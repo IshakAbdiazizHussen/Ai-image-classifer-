@@ -123,4 +123,8 @@ services:
       start_period: 15s
 
 volumes:
+  # Holds all prediction history. `docker compose down` alone leaves this
+  # untouched — only `docker compose down -v` deletes it, PERMANENTLY and
+  # with no way to recover it afterward. No automated backup exists (see
+  # docs/architecture.md's "Backup and Data Durability" section).
   db_data:
