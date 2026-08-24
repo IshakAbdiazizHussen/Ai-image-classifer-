@@ -260,6 +260,24 @@ specific artifact being production-ready.
 > airplane at 39.7% — an honest miss on the model's known-weakest class,
 > not hidden, consistent with 78% overall accuracy meaning roughly 1 in 5
 > predictions will be wrong.
+>
+> **That last spot check exposed two brittle `backend/tests/`** —
+> `test_predict_known_sample_image` and `test_predict_success_returns_
+> expected_shape` both hardcoded the alphabetically-first `ml/data/raw/
+> cat/*.png` file and asserted it predicts `"cat"`. It's exactly the image
+> above, and the real model gets it wrong — a correct, honest result the
+> old placeholder model's near-lucky behavior never exposed. Fixed by
+> splitting concerns rather than picking a different lucky image:
+> `test_inference_service.py` now has `test_predict_returns_a_well_
+> formed_result` (structural correctness only — valid class, confidence
+> in [0,1], full probability distribution) plus a new
+> `test_predict_is_reasonably_accurate_across_a_sample` (3 images/class,
+> 30 total, asserts ≥50% correct — comfortably below the model's real 78%
+> to avoid flakiness, far above the 10% random-chance baseline; actual
+> result on this sample: 29/30, 97%). `test_predict_endpoint.py`'s
+> shape test — whose own name says "shape," not "accuracy" — now asserts
+> `predicted_label` is a valid class rather than a specific one. Full
+> suite re-verified: **49/49 passing.**
 
 ---
 

@@ -17,14 +17,57 @@ def inference_service() -> InferenceService:
     return InferenceService(settings.artifacts_dir, settings.model_version)
 
 
-def test_predict_known_sample_image(inference_service: InferenceService) -> None:
+def test_predict_returns_a_well_formed_result(inference_service: InferenceService) -> None:
+    """Structural correctness of a single prediction — not which label it
+    picks. The real model has 78.2% test accuracy (see
+    ml/artifacts/<version>/evaluation_report.json), so asserting one
+    specific image predicts one specific class is inherently brittle: a
+    hard example on the model's weakest class (cat, F1 0.647) can
+    legitimately be wrong without anything being broken. See
+    `test_predict_is_reasonably_accurate_across_a_sample` below for the
+    "the model actually works" check this test used to also try to be."""
     sample_path = next(Path("ml/data/raw/cat").glob("*.png"))
     result = inference_service.predict(sample_path.read_bytes())
 
-    assert result.predicted_label == "cat"
+    assert result.predicted_label in inference_service.classes
     assert 0.0 <= result.confidence <= 1.0
     assert set(result.probabilities) == set(inference_service.classes)
     assert abs(sum(result.probabilities.values()) - 1.0) < 1e-4
+
+
+def test_predict_is_reasonably_accurate_across_a_sample(
+    inference_service: InferenceService,
+) -> None:
+    """A genuine sanity check that the whole inference pipeline
+    (preprocessing, forward pass, label mapping) is wired up correctly —
+    without coupling to any single image's specific outcome. Samples a
+    few images per class and asserts a clear majority are classified
+    correctly, allowing for the model's known ~78% accuracy rather than
+    demanding 100%."""
+    samples_per_class = 3
+    sample_paths = [
+        path
+        for class_dir in sorted(Path("ml/data/raw").iterdir())
+        if class_dir.is_dir()
+        for path in sorted(class_dir.glob("*.png"))[:samples_per_class]
+    ]
+    assert sample_paths, "no sample images found under ml/data/raw"
+
+    correct = sum(
+        1
+        for path in sample_paths
+        if inference_service.predict(path.read_bytes()).predicted_label == path.parent.name
+    )
+    accuracy = correct / len(sample_paths)
+
+    # Comfortably below the model's real ~78% test accuracy (avoids
+    # flakiness from small-sample variance) but far above the 10%
+    # random-chance baseline for 10 classes — this is a "the pipeline
+    # isn't broken" check, not a re-measurement of model quality.
+    assert accuracy >= 0.5, (
+        f"only {correct}/{len(sample_paths)} correct ({accuracy:.0%}) — "
+        f"expected a clear majority given the model's real test accuracy"
+    )
 
 
 def test_predict_rejects_non_image_bytes(inference_service: InferenceService) -> None:

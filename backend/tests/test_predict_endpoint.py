@@ -50,6 +50,12 @@ def test_predict_rejects_corrupt_image_bytes(client: TestClient) -> None:
 
 
 def test_predict_success_returns_expected_shape(client: TestClient) -> None:
+    # This test is about response *shape*, not model accuracy — the real
+    # model has 78.2% test accuracy, so asserting a specific hardcoded
+    # image predicts a specific class would be brittle (see
+    # backend/tests/test_inference_service.py's
+    # test_predict_is_reasonably_accurate_across_a_sample for the "the
+    # model actually works" check).
     sample_path = next(Path("ml/data/raw/cat").glob("*.png"))
     response = client.post(
         "/predict",
@@ -57,9 +63,11 @@ def test_predict_success_returns_expected_shape(client: TestClient) -> None:
     )
     assert response.status_code == 200
     body = response.json()
-    assert body["predicted_label"] == "cat"
+    valid_classes = client.app.state.inference_service.classes
+    assert body["predicted_label"] in valid_classes
     assert "model_version" in body
     assert "probabilities" in body
+    assert set(body["probabilities"]) == set(valid_classes)
     assert body["cached"] is False
 
 
