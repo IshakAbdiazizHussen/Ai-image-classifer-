@@ -37,11 +37,15 @@ model:
 
 training:
   batch_size: 32
-  epochs: 3                      # smoke-test default; raise for a real run
-                                  # (tested up to 8 on the 36-img/class
-                                  # sample split — it overfits past ~epoch 3
-                                  # since there's so little training data;
-                                  # a real dataset needs its own tuning)
+  epochs: 5                      # tuned against the real 300-img/class dataset:
+                                  # a first attempt at 10 epochs showed val_loss
+                                  # bottoming out at epoch 5 (0.628, val_acc
+                                  # 0.802 — both the best of all 10 epochs) and
+                                  # never recovering to that level again (best
+                                  # val_loss after epoch 5 was 0.881 at epoch 9,
+                                  # still worse). train.py only saves the final
+                                  # epoch's weights, so epochs is set to the
+                                  # observed sweet spot to actually capture it.
   learning_rate: 0.001
   num_workers: 2
   device: auto                   # auto | cpu | mps | cuda

@@ -99,6 +99,32 @@ sample dataset completed end-to-end (360/120/120 train/val/test split, 0
 skipped files) and produced
 `ml/checkpoints/20260822T165334Z/{checkpoint.pt,config.yaml,metrics.json}`.
 
+> **Re-run against the real dataset (2026-08-24).** The placeholder was
+> replaced with 300 real CIFAR-10 images/class (3,000 total; 5,000/class
+> available in CIFAR-10's train split, so zero duplication risk) via the
+> new `ml/data/prepare_real_dataset.py`. Independently verified: exactly
+> 300/300 files per class, zero placeholder-pattern leftovers, 3,000
+> unique MD5 hashes for 3,000 files. First download attempt (torchvision's
+> default `cs.toronto.edu` source) stalled for 24+ hours with no crash or
+> timeout — a real, silent failure only caught by manually checking a day
+> later. Rewrote the download step with a stdlib-only, resumable,
+> stall-timeout-protected downloader against a verified working mirror
+> (`data.brainchip.com`) — real run: 170MB in 30s at ~5.6 MB/s.
+>
+> **Epoch count re-tuned, not assumed.** The old `epochs: 3` was tuned for
+> a 36-images/class train split that overfit almost immediately — with
+> 180 train images/class now (5x more), that no longer applied. First
+> attempt at 10 epochs: val_loss bottomed out at **epoch 5**
+> (0.628, val_acc 0.802 — both the best of all 10 epochs) and never
+> recovered to that level again despite a partial, noisier rebound at
+> epochs 8-9 (best val_loss after epoch 5 was 0.881 at epoch 9, still
+> worse). Since `train.py` only saves the final epoch's weights, ran a
+> second pass with `epochs: 5` to actually capture that checkpoint —
+> deterministic, reproduced epochs 1-5 identically. Final:
+> `ml/checkpoints/20260824T142716Z/`, val_acc 0.8017, **val macro F1
+> 0.8026** (computed via a one-off script reusing the existing dataset/
+> model loading code, unmodified — `train.py` doesn't report F1 itself).
+
 ---
 
 ## Phase 2 — Model Export and Evaluation
@@ -211,6 +237,29 @@ end-to-end. **Not yet promotable per this run's own numbers** — expected
 until a real dataset/training budget replaces the sample one; the backend
 (Phase 3) is built against the export/evaluate contract, not against this
 specific artifact being production-ready.
+
+> **Re-run against the real dataset (2026-08-24) — now genuinely
+> PROMOTABLE.** `evaluate.py` was extended to also report `macro_f1` and
+> `f1_per_class` (a real, requested metric it didn't compute before —
+> additive keys only, existing tests unaffected). Exported the retuned
+> `epochs: 5` checkpoint to `ml/artifacts/20260824T143019Z/`, evaluated
+> against the 600-image held-out test split (never touched by training or
+> the epoch-tuning above — rules 2/4/9): **test_accuracy = 0.7817,
+> macro_f1 = 0.7823**, threshold unchanged at 0.55 (not adjusted to force
+> the outcome) → **PROMOTABLE**. Per-class F1 ranges from 0.647 (cat,
+> weakest — consistent with cat/dog being CIFAR-10's classically hardest
+> pair) to 0.923 (truck, strongest); no red flags in the confusion matrix.
+> `MODEL_VERSION` updated in `.env`, backend container recreated
+> (`docker compose up -d backend` — env var change only, no code/compose
+> file touched), and `/healthz` confirmed for real:
+> `{"status":"ok","model_version":"20260824T143019Z","model_promotable":true}`
+> — and the "did NOT clear its own accuracy threshold" warning that fired
+> for the old artifact correctly did not fire this time. Two live
+> `/predict` spot checks through the running container: a truck image
+> correctly predicted at 100% confidence; a cat image misclassified as
+> airplane at 39.7% — an honest miss on the model's known-weakest class,
+> not hidden, consistent with 78% overall accuracy meaning roughly 1 in 5
+> predictions will be wrong.
 
 ---
 

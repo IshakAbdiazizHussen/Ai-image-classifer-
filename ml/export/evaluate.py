@@ -61,23 +61,29 @@ def compute_metrics_from_confusion(
 
     precision_per_class = {}
     recall_per_class = {}
+    f1_per_class = {}
     for idx, class_name in enumerate(classes):
         predicted_positive = confusion[:, idx].sum()
         actual_positive = confusion[idx, :].sum()
         true_positive = confusion[idx, idx]
-        precision_per_class[class_name] = (
-            float(true_positive / predicted_positive) if predicted_positive else 0.0
+        precision = float(true_positive / predicted_positive) if predicted_positive else 0.0
+        recall = float(true_positive / actual_positive) if actual_positive else 0.0
+        precision_per_class[class_name] = precision
+        recall_per_class[class_name] = recall
+        f1_per_class[class_name] = (
+            2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
         )
-        recall_per_class[class_name] = (
-            float(true_positive / actual_positive) if actual_positive else 0.0
-        )
+
+    macro_f1 = sum(f1_per_class.values()) / len(f1_per_class) if f1_per_class else 0.0
 
     return {
         "version": version,
         "num_test_samples": total,
         "test_accuracy": float(accuracy),
+        "macro_f1": float(macro_f1),
         "precision_per_class": precision_per_class,
         "recall_per_class": recall_per_class,
+        "f1_per_class": f1_per_class,
         "confusion_matrix": confusion.tolist(),
         "classes": classes,
         "min_test_accuracy": min_test_accuracy,
@@ -144,6 +150,7 @@ def main() -> None:
     print(
         f"version={report['version']} "
         f"test_accuracy={report['test_accuracy']:.4f} "
+        f"macro_f1={report['macro_f1']:.4f} "
         f"threshold={min_test_accuracy:.4f} -> {status}"
     )
     sys.exit(0 if report["meets_threshold"] else 1)
