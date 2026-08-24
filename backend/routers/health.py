@@ -20,13 +20,18 @@ from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
 from backend.core.redis import get_redis_client
+from backend.schemas.error import ErrorResponse
 from backend.schemas.health import HealthResponse
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/healthz", response_model=HealthResponse)
+@router.get(
+    "/healthz",
+    response_model=HealthResponse,
+    responses={"default": {"model": ErrorResponse, "description": "Standardized error response"}},
+)
 def healthz(
     request: Request,
     response: Response,

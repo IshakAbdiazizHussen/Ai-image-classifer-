@@ -8,13 +8,18 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from backend.core.database import get_db
+from backend.schemas.error import ErrorResponse
 from backend.schemas.history import PaginatedHistoryResponse, PredictionHistoryItem
 from backend.services import prediction_service
 
 router = APIRouter()
 
 
-@router.get("/history", response_model=PaginatedHistoryResponse)
+@router.get(
+    "/history",
+    response_model=PaginatedHistoryResponse,
+    responses={"default": {"model": ErrorResponse, "description": "Standardized error response"}},
+)
 def get_history(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),

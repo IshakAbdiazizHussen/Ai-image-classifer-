@@ -15,6 +15,7 @@ from backend.core.config import settings
 from backend.core.database import get_db
 from backend.core.errors import APIError
 from backend.core.redis import get_redis_client
+from backend.schemas.error import ErrorResponse
 from backend.schemas.predict import PredictResponse
 from backend.services import prediction_service
 from backend.services.inference_service import InferenceService
@@ -34,7 +35,11 @@ def get_rate_limiter(request: Request) -> RateLimiter:
     return request.app.state.rate_limiter
 
 
-@router.post("/predict", response_model=PredictResponse)
+@router.post(
+    "/predict",
+    response_model=PredictResponse,
+    responses={"default": {"model": ErrorResponse, "description": "Standardized error response"}},
+)
 async def predict(
     request: Request,
     file: UploadFile,

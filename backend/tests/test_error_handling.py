@@ -63,6 +63,38 @@ def test_corrupt_image_error_shape(client: TestClient) -> None:
     _assert_standard_error_shape(response.json(), "invalid_image")
 
 
+def test_missing_file_field_error_shape(client: TestClient) -> None:
+    # No "file" field at all — FastAPI's own request validation rejects
+    # this before the route body ever runs (confirmed live against the
+    # running container during the audit).
+    response = client.post("/predict", data={"notfile": "hello"})
+    assert response.status_code == 422
+    _assert_standard_error_shape(response.json(), "validation_error")
+
+
+def test_empty_file_field_error_shape(client: TestClient) -> None:
+    # "file" present but as a plain empty form value, not an uploaded
+    # file — a type mismatch against the `file: UploadFile` parameter.
+    response = client.post("/predict", data={"file": ""})
+    assert response.status_code == 422
+    _assert_standard_error_shape(response.json(), "validation_error")
+
+
+def test_malformed_multipart_body_error_shape(client: TestClient) -> None:
+    # Content-Type claims multipart/form-data, but the body isn't valid
+    # multipart at all — Starlette's own parser rejects this at a lower
+    # level than FastAPI's field validation, landing on the
+    # StarletteHTTPException handler (the same one the Phase 6 404 bug
+    # was in) rather than the RequestValidationError one above.
+    response = client.post(
+        "/predict",
+        content=b"garbage not multipart",
+        headers={"Content-Type": "multipart/form-data; boundary=xyz"},
+    )
+    assert response.status_code == 400
+    _assert_standard_error_shape(response.json(), "bad_request")
+
+
 def test_rate_limited_error_shape_and_retry_after_header(client: TestClient, test_redis) -> None:
     app.dependency_overrides[get_rate_limiter] = lambda: RateLimiter(test_redis, limit_per_minute=1)
     try:
