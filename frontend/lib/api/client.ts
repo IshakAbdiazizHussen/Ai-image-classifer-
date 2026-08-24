@@ -51,6 +51,7 @@ export class ApiError extends Error {
 }
 
 async function readErrorMessage(response: Response): Promise<string> {
+  let message: string;
   try {
     // Backend's standardized error shape (Phase 6): {"error": {"code",
     // "message"}}. `detail` is kept as a fallback for resilience, though
@@ -59,12 +60,25 @@ async function readErrorMessage(response: Response): Promise<string> {
       error?: { message?: unknown };
       detail?: unknown;
     };
-    if (typeof body.error?.message === "string") return body.error.message;
-    if (typeof body.detail === "string") return body.detail;
-    return JSON.stringify(body);
+    if (typeof body.error?.message === "string") message = body.error.message;
+    else if (typeof body.detail === "string") message = body.detail;
+    else message = JSON.stringify(body);
   } catch {
-    return response.statusText || `Request failed with status ${response.status}`;
+    message = response.statusText || `Request failed with status ${response.status}`;
   }
+
+  // The backend sets Retry-After on 429s (Phase 6, computed from the
+  // actual seconds left in the current rate-limit window). Append it when
+  // present; if it's missing for any reason, fall back to the message
+  // above unchanged rather than breaking.
+  if (response.status === 429) {
+    const retryAfter = response.headers.get("Retry-After");
+    if (retryAfter) {
+      return `${message} Try again in ${retryAfter}s.`;
+    }
+  }
+
+  return message;
 }
 
 export async function predictImage(file: File): Promise<PredictResponse> {

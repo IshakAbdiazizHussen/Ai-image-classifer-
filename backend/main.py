@@ -48,6 +48,13 @@ app.add_middleware(
     allow_origins=settings.cors_origins_list,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Without this, browsers strip Retry-After from cross-origin responses
+    # before JS ever sees it — only a small CORS-safelisted set (Content-
+    # Type, Content-Length, etc.) is exposed by default. Found by actually
+    # testing the frontend's Retry-After fix in a real browser rather than
+    # via curl (curl doesn't enforce CORS, so it never would have shown
+    # this) — same class of bug as the original CORS fix in Phase 4.
+    expose_headers=["Retry-After"],
 )
 
 app.include_router(predict.router)

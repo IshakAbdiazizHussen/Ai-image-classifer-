@@ -20,7 +20,7 @@ export default function UploadPage() {
       <UploadForm onSubmit={predictImage} onPredicted={setResult} />
 
       {result && (
-        <section className="result-section">
+        <section className="result-section" role="status" aria-live="polite">
           <ResultCard result={result} />
           <ProbabilityChart probabilities={result.probabilities} />
         </section>
