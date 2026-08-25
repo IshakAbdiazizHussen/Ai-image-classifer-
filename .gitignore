@@ -17,3 +17,4 @@ ml/artifacts/
 
 # OS
 .DS_Store
+!ml/artifacts/20260824T143019Z/
