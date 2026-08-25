@@ -475,14 +475,6 @@ button:disabled {
   line-height: 1.5;
 }
 
-.examples-note {
-  margin: 2.5rem 0 0;
-  text-align: center;
-  font-family: var(--font-geist-mono), monospace;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
 @media (max-width: 800px) {
   .examples-grid {
     grid-template-columns: 1fr;

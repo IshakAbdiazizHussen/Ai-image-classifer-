@@ -42,7 +42,6 @@ export function ExampleCards() {
             </div>
           ))}
         </div>
-        <p className="examples-note">placeholder — drop three real example images here</p>
       </div>
     </section>
   );
