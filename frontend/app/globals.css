@@ -225,7 +225,7 @@ button:disabled {
 }
 
 .landing-nav {
-  padding: 1.5rem 3rem;
+  padding: 1.5rem 2rem;
 }
 
 /* 3-column grid: 1fr auto 1fr. The two 1fr columns absorb whatever space
@@ -233,12 +233,19 @@ button:disabled {
    justify-self: start/end — so the center column (the links) sits
    truly centered on the FULL bar width, not just centered between
    wherever the logo and button happen to end. This holds regardless of
-   how wide the logo or button text is. */
+   how wide the logo or button text is.
+
+   Capped at max-width + auto margins so on wide viewports the logo/button
+   pull in from the raw edge instead of stretching all the way out — the
+   .landing-nav padding above still applies inside that, so there's
+   breathing room even when the viewport is narrower than max-width. */
 .landing-nav-inner {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
 }
 
 .landing-nav-brand {
