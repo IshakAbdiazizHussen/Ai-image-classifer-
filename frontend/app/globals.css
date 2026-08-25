@@ -676,3 +676,93 @@ button:disabled {
   font-size: 1rem;
   line-height: 1.6;
 }
+
+.honest-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+
+.accuracy-panel {
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.accuracy-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.accuracy-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.accuracy-bar-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 45px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.accuracy-bar-label {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.accuracy-bar-track {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.accuracy-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.accuracy-bar-fill.tier-high {
+  background: var(--mint);
+}
+
+.accuracy-bar-fill.tier-mid {
+  background: var(--amber);
+}
+
+.accuracy-bar-fill.tier-low {
+  background: var(--danger);
+}
+
+.accuracy-bar-value {
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.accuracy-panel-note {
+  margin: 1.75rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .honest-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
