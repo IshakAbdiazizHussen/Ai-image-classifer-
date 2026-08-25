@@ -495,21 +495,25 @@ button:disabled {
   padding: 4rem 2rem;
 }
 
+/* No padding here on purpose — this must be exactly as wide as
+   .landing-nav-inner / .examples-inner (both 1280px, edge-aligned) so
+   .steps-grid lines up with the nav/cards above it. The heading's small
+   left indent lives on .section-band-title/.section-band-subtitle
+   instead, so it doesn't also shrink the grid the way it did before. */
 .section-band-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding-left: 1.5rem;
 }
 
 .section-band-title {
-  margin: 0;
+  margin: 0 0 0 1.5rem;
   font-size: clamp(1.75rem, 3vw, 2.25rem);
   font-weight: 800;
   color: var(--text);
 }
 
 .section-band-subtitle {
-  margin: 0.75rem 0 0;
+  margin: 0.75rem 0 0 1.5rem;
   color: var(--text-muted);
   font-size: 1.05rem;
 }
