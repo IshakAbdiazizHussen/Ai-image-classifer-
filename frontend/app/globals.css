@@ -14,6 +14,10 @@
   --mint-ink: #06120c;
   --mint-soft-bg: rgba(52, 211, 153, 0.08);
   --mint-soft-border: rgba(52, 211, 153, 0.35);
+  /* One step lighter than --surface, for a card that needs to stand out
+     while sitting on a --surface background (e.g. .step-card inside
+     .section-band) instead of directly on --bg. */
+  --surface-raised: #1a1e26;
   /* Confidence-tier colors for the landing page's ExampleCards — amber is
      new, high/low reuse --mint/--danger since they're already the right
      green/red for this. */
@@ -508,4 +512,59 @@ button:disabled {
   margin: 0.75rem 0 0;
   color: var(--text-muted);
   font-size: 1.05rem;
+}
+
+.steps-grid {
+  margin-top: 2.5rem;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.step-card {
+  padding: 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-raised);
+  text-align: left;
+}
+
+.step-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1.25rem;
+  border-radius: 999px;
+  background: var(--mint-soft-bg);
+  color: var(--mint);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.step-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.step-description {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 1024px) {
+  .steps-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .steps-grid {
+    grid-template-columns: 1fr;
+  }
 }
