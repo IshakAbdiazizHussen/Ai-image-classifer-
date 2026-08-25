@@ -59,7 +59,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379/0
       MODEL_VERSION: ${MODEL_VERSION}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://127.0.0.1:3001}
       RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-30}
       MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-5242880}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
@@ -107,7 +107,7 @@ services:
         # (localhost:8000), not the in-network service name "backend".
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       backend:
         condition: service_healthy
@@ -116,7 +116,7 @@ services:
         - "CMD"
         - "node"
         - "-e"
-        - "fetch('http://localhost:3000/upload').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+        - "fetch('http://localhost:3001/upload').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 10s
       timeout: 5s
       retries: 5

@@ -118,13 +118,25 @@ core/        config, DB session, Redis client, logging setup.
 
 ## Docker Compose Topology
 
-Services: `frontend` (Next.js, port 3000), `backend` (FastAPI, port 8000,
+Services: `frontend` (Next.js, port 3001), `backend` (FastAPI, port 8000,
 depends on `db` and `redis`, mounts the `ml/artifacts/` model registry
 read-only), `db` (Postgres, named volume for data), `redis`. Each service
 reads its configuration from environment variables (via `.env`, git-ignored,
 with an `.env.example` documenting required keys); `backend` and `db`/`redis`
 expose healthchecks that `docker compose` waits on before starting
 dependents.
+
+The frontend runs on **3001, not Next.js's default 3000** — on this
+machine, 3000 is where the compose stack's own frontend container itself
+binds (a `docker compose up` frontend occupies host port 3000 as
+configured before this doc was updated), so a local `npm run dev` run
+outside the stack would silently fall back to whatever port Next.js
+picked next rather than fail loudly. 3001 is now the single explicit,
+documented port for both the containerized frontend (`docker-compose.yml`)
+and local dev (`next dev -p 3001` / `next start -p 3001` in
+`frontend/package.json`) — deliberate and pinned, not a fallback.
+`CORS_ORIGINS` (`.env`/`.env.example`) and the frontend healthcheck are
+both kept in sync with this port.
 
 ## Local Development: Two Postgres Instances
 
@@ -140,11 +152,11 @@ different data and nothing about their names makes that obvious:
 - **The `db` service in `docker-compose.yml`** (container name
   `imageclassifier-db-1` when running, no host-published port) — the
   real database backing the actual running application at
-  `localhost:8000` / `localhost:3000` when the stack is brought up via
+  `localhost:8000` / `localhost:3001` when the stack is brought up via
   `docker compose up`.
 
 **These are not synchronized and will diverge** — a prediction made
-through the containerized app (`localhost:3000`) does not appear in
+through the containerized app (`localhost:3001`) does not appear in
 `imgclf-postgres`, and a `pytest` run does not affect the compose stack's
 data. Confirmed by direct query during a database audit: at one point
 these held 22 and 26 rows respectively, despite both being labeled
