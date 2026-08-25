@@ -318,7 +318,7 @@ button:disabled {
 .hero {
   max-width: 900px;
   margin: 0 auto;
-  padding: 5rem 2rem 6rem;
+  padding: 8.5rem 2rem 6rem;
   text-align: center;
   display: flex;
   flex-direction: column;
