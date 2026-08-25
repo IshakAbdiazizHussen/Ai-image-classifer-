@@ -1,3 +1,20 @@
+/* Theme tokens. Dark is the default (:root, no attribute needed) and
+   matches the original design exactly — [data-theme="light"] overrides
+   every token for light mode. Toggled by ThemeToggle.tsx, which flips
+   documentElement.dataset.theme; the inline script in layout.tsx applies
+   the right value before first paint (localStorage, else OS
+   prefers-color-scheme, else this dark default) so there's no flash.
+
+   --mint/--amber/--danger stay the SAME hex in both themes on purpose
+   (brand consistency, and they're fine as fills/borders against either
+   background) — but used as *text*, their light-mode contrast against a
+   white page fails WCAG AA badly (checked: #34d399 on white is ~1.9:1,
+   under even the relaxed 3:1 large-text minimum). --mint-fg/--amber-fg/
+   --danger-fg are darker same-hue variants for that specific case, each
+   verified ≥4.5:1 on white; every `color:` (text) rule below uses the
+   *-fg token, every `background:`/`border:` (fill) rule keeps the plain
+   token. In dark mode the *-fg tokens are identical to the plain ones —
+   the original hues already have great contrast on a dark background. */
 :root {
   --bg: #0b0d10;
   --surface: #14171c;
@@ -5,12 +22,15 @@
   --text: #e8eaed;
   --text-muted: #9aa2ad;
   --accent: #5b9dff;
+  --accent-ink: #05070a;
   --danger: #ff6b6b;
+  --danger-fg: #ff6b6b;
   --danger-bg: #2a1417;
   /* Mint accent used only by the landing page (LandingNav, Hero) — kept
      separate from --accent (the app's own blue) since the reference
      design's brand/CTA color is a distinct green, not blue. */
   --mint: #34d399;
+  --mint-fg: #34d399;
   --mint-ink: #06120c;
   --mint-soft-bg: rgba(52, 211, 153, 0.08);
   --mint-soft-border: rgba(52, 211, 153, 0.35);
@@ -22,14 +42,67 @@
      new, high/low reuse --mint/--danger since they're already the right
      green/red for this. */
   --amber: #f0b429;
+  --amber-fg: #f0b429;
   /* Same "solid tinted alert box" pattern already used by --danger-bg
      (see .form-error) — for the warning-callout on the landing page. */
   --amber-bg: #2a2013;
+  /* ExampleCards' diagonal-stripe placeholder swatch. */
+  --swatch-bg: #1c2028;
+  --swatch-stripe-1: rgba(255, 255, 255, 0.04);
+  --swatch-stripe-2: rgba(255, 255, 255, 0.08);
+  /* ThemeToggle's knob — deliberately the same in both themes (a plain
+     white circle with a dark icon), same reasoning as an iOS-style
+     switch knob: it reads clearly against the track regardless of which
+     mode is active. */
+  --toggle-thumb-bg: #ffffff;
+  --toggle-thumb-fg: #0b0d10;
   color-scheme: dark;
+}
+
+[data-theme="light"] {
+  --bg: #ffffff;
+  --surface: #f6f7f9;
+  --surface-raised: #ffffff;
+  --border: #e0e3e8;
+  --text: #14171c;
+  --text-muted: #5b6472;
+  --accent: #2f6fe0;
+  --accent-ink: #ffffff;
+  --danger: #ff6b6b;
+  --danger-fg: #b91c1c;
+  --danger-bg: #fdecec;
+  --mint: #34d399;
+  --mint-fg: #047857;
+  --mint-ink: #06120c;
+  --mint-soft-bg: rgba(4, 120, 87, 0.08);
+  --mint-soft-border: rgba(4, 120, 87, 0.35);
+  --amber: #f0b429;
+  --amber-fg: #b45309;
+  --amber-bg: #fdf3dc;
+  --swatch-bg: #eceef1;
+  --swatch-stripe-1: rgba(0, 0, 0, 0.04);
+  --swatch-stripe-2: rgba(0, 0, 0, 0.08);
+  --toggle-thumb-bg: #ffffff;
+  --toggle-thumb-fg: #0b0d10;
+  color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* Smooth retheme (req: transition on background-color/color, applied
+   broadly rather than hand-listing every themed selector) — specific
+   rules elsewhere (hover states etc.) override this per normal cascade,
+   so it doesn't fight anything, it just makes color changes ease instead
+   of snap. */
+*,
+*::before,
+*::after {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 /* outline-offset is required, not cosmetic: with no offset the ring sits
@@ -122,7 +195,7 @@ button {
   border-radius: 6px;
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: #05070a;
+  color: var(--accent-ink);
   font-weight: 600;
   cursor: pointer;
 }
@@ -138,7 +211,7 @@ button:disabled {
 }
 
 .form-error {
-  color: var(--danger);
+  color: var(--danger-fg);
   background: var(--danger-bg);
   border: 1px solid var(--danger);
   border-radius: 6px;
@@ -272,7 +345,7 @@ button:disabled {
 }
 
 .landing-nav-brand-accent {
-  color: var(--mint);
+  color: var(--mint-fg);
 }
 
 .landing-nav-links {
@@ -298,8 +371,6 @@ button:disabled {
 }
 
 .landing-nav-cta {
-  grid-column: 3;
-  justify-self: end;
   display: inline-block;
   padding: 0.7rem 1.6rem;
   border-radius: 999px;
@@ -342,7 +413,7 @@ button:disabled {
   border-radius: 999px;
   background: var(--mint-soft-bg);
   border: 1px solid var(--mint-soft-border);
-  color: var(--mint);
+  color: var(--mint-fg);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -437,11 +508,11 @@ button:disabled {
   aspect-ratio: 16 / 9;
   border-radius: 12px;
   margin-bottom: 1.25rem;
-  background-color: #1c2028;
+  background-color: var(--swatch-bg);
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(255, 255, 255, 0.04) 0 10px,
-    rgba(255, 255, 255, 0.08) 10px 20px
+    var(--swatch-stripe-1) 0 10px,
+    var(--swatch-stripe-2) 10px 20px
   );
 }
 
@@ -464,15 +535,15 @@ button:disabled {
 }
 
 .example-card-confidence.tier-high {
-  color: var(--mint);
+  color: var(--mint-fg);
 }
 
 .example-card-confidence.tier-mid {
-  color: var(--amber);
+  color: var(--amber-fg);
 }
 
 .example-card-confidence.tier-low {
-  color: var(--danger);
+  color: var(--danger-fg);
 }
 
 .example-card-caption {
@@ -545,7 +616,7 @@ button:disabled {
   margin-bottom: 1.25rem;
   border-radius: 999px;
   background: var(--mint-soft-bg);
-  color: var(--mint);
+  color: var(--mint-fg);
   font-weight: 700;
   font-size: 1rem;
 }
@@ -590,7 +661,7 @@ button:disabled {
 
 .section-eyebrow {
   margin: 0;
-  color: var(--mint);
+  color: var(--mint-fg);
   font-weight: 600;
   font-size: 0.95rem;
 }
@@ -652,7 +723,7 @@ button:disabled {
 }
 
 .stat-value-accent {
-  color: var(--mint);
+  color: var(--mint-fg);
 }
 
 .stat-label {
@@ -675,7 +746,7 @@ button:disabled {
 
 .warning-callout-title {
   margin: 0;
-  color: var(--amber);
+  color: var(--amber-fg);
   font-size: 1.15rem;
   font-weight: 700;
 }
@@ -776,4 +847,56 @@ button:disabled {
   .honest-stats-grid {
     grid-template-columns: 1fr;
   }
+}
+
+.landing-nav-actions {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.theme-toggle {
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  /* Overrides the app-wide `button { color: var(--accent-ink) }` base
+     rule — this control isn't an accent-filled button. */
+  color: inherit;
+}
+
+.theme-toggle-placeholder {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.theme-toggle-track {
+  display: flex;
+  align-items: center;
+  width: 44px;
+  height: 24px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--border);
+  transition: background-color 0.3s ease;
+}
+
+.theme-toggle-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--toggle-thumb-bg);
+  color: var(--toggle-thumb-fg);
+  transform: translateX(0);
+  transition: transform 0.25s ease;
+}
+
+.theme-toggle[aria-checked="true"] .theme-toggle-thumb {
+  transform: translateX(20px);
 }

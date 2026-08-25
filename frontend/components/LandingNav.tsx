@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 // Landing-page-only nav (distinct from the "Classify"/"History" header used
 // on /upload and /history — see app/(app)/layout.tsx). Wordmark split into
 // a neutral half and a mint half, three anchor links, and a pill CTA into
-// the real app.
+// the real app. ThemeToggle sets data-theme on <html>, so it themes every
+// page, not just this header — see globals.css's theme-token comment and
+// layout.tsx's beforeInteractive init script.
 export function LandingNav() {
   return (
     <header className="landing-nav">
@@ -18,9 +21,12 @@ export function LandingNav() {
           <a href="#under-the-hood">Under the hood</a>
         </nav>
 
-        <Link href="/upload" className="landing-nav-cta">
-          Upload an image
-        </Link>
+        <div className="landing-nav-actions">
+          <ThemeToggle />
+          <Link href="/upload" className="landing-nav-cta">
+            Upload an image
+          </Link>
+        </div>
       </div>
     </header>
   );
