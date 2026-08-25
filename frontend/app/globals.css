@@ -365,10 +365,14 @@ button:disabled {
   gap: 1.25rem;
 }
 
+/* Matches .accuracy-panel's own container treatment exactly (2rem/20px)
+   so ResultCard and the ProbabilityChart panel directly below it (which
+   reuses .accuracy-panel itself — see ProbabilityChart.tsx) read as one
+   consistent design language, not the old cramped 1.25rem/10px card. */
 .result-card {
-  padding: 1.25rem;
+  padding: 2rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 20px;
   background: var(--surface);
 }
 
@@ -380,45 +384,6 @@ button:disabled {
 .result-card .meta {
   color: var(--text-muted);
   font-size: 0.85rem;
-}
-
-.probability-chart {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.probability-row {
-  display: grid;
-  grid-template-columns: 6.5rem 1fr 3.5rem;
-  align-items: center;
-  gap: 0.6rem;
-  font-size: 0.85rem;
-}
-
-.probability-label {
-  text-transform: capitalize;
-  color: var(--text-muted);
-}
-
-.probability-bar-track {
-  height: 8px;
-  border-radius: 4px;
-  background: var(--border);
-  overflow: hidden;
-}
-
-.probability-bar-fill {
-  height: 100%;
-  background: var(--accent);
-}
-
-.probability-value {
-  text-align: right;
-  color: var(--text-muted);
 }
 
 .history-table {
@@ -979,6 +944,13 @@ button:disabled {
 
 .accuracy-bar-fill.tier-low {
   background: var(--danger);
+}
+
+/* Used only by ProbabilityChart, for every row except the predicted
+   (top) one — see that component's comment for why non-winning rows
+   are muted rather than colored via the mint/amber/red tiers above. */
+.accuracy-bar-fill.tier-neutral {
+  background: var(--text-muted);
 }
 
 .accuracy-bar-value {
