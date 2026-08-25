@@ -595,7 +595,13 @@ button:disabled {
 .honest-stats-title {
   margin: 1rem 0 0;
   max-width: 900px;
-  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  /* The old clamp() floor (1.75rem = 28px) was too large below ~430px —
+     "It is right about eight times in ten." (the text before the manual
+     <br/>) doesn't fit that width at 28px, so it wrapped mid-sentence
+     into a 3rd/4th line instead of staying on its own line. Verified via
+     a direct viewport sweep (320px-1728px) that this formula keeps both
+     sentences to exactly one physical line each at every width. */
+  font-size: clamp(15px, calc(5.5vw - 2.5px), 2.5rem);
   font-weight: 800;
   line-height: 1.2;
   color: var(--text);
