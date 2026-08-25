@@ -314,7 +314,19 @@ button:disabled {
   color: var(--text-muted);
 }
 
+/* Fixed to the top of the viewport (stays visible while scrolling) — an
+   explicit background is required for this, otherwise page content would
+   show through/scroll underneath it. Measured its own height (90px) to
+   compensate .hero's top padding below, so content doesn't jump up and
+   get covered by the now out-of-flow nav. */
 .landing-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   padding: 1.5rem 2rem;
 }
 
@@ -404,7 +416,11 @@ button:disabled {
 .hero {
   max-width: 900px;
   margin: 0 auto;
-  padding: 8.5rem 2rem 6rem;
+  /* Top padding = the original 8.5rem gap + .landing-nav's own measured
+     height (90px), now that the nav is position:fixed and no longer
+     takes up space in normal flow — without this, content would jump up
+     underneath the fixed nav. */
+  padding: 14.125rem 2rem 6rem;
   text-align: center;
   display: flex;
   flex-direction: column;
