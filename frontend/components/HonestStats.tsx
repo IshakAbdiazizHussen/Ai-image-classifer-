@@ -36,6 +36,33 @@ export function HonestStats() {
           Vehicles are easy — they have hard edges and consistent shapes.
           Animals are harder, and cats are the hardest of all.
         </p>
+
+        {/* Numbers corrected the same way as above: the reference showed
+            91.4% / 0.912, but the real evaluation_report.json for the
+            promoted model is test_accuracy=0.7817, macro_f1=0.7823 — the
+            exact same figures already stated as "eight times in ten"
+            higher up, so using 91.4%/0.912 here would contradict that
+            within the same section. */}
+        <div className="stats-cards">
+          <div className="stat-card">
+            <div className="stat-value stat-value-accent">78.2%</div>
+            <div className="stat-label">overall accuracy</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">0.782</div>
+            <div className="stat-label">macro F1</div>
+          </div>
+        </div>
+
+        <div className="warning-callout">
+          <h3 className="warning-callout-title">Where it will let you down</h3>
+          <p className="warning-callout-body">
+            Show it something outside the ten categories — a pizza, a
+            screenshot, your face — and it will still answer with one of
+            the ten. Low confidence is the signal that it does not really
+            know.
+          </p>
+        </div>
       </div>
     </section>
   );

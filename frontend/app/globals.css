@@ -22,6 +22,9 @@
      new, high/low reuse --mint/--danger since they're already the right
      green/red for this. */
   --amber: #f0b429;
+  /* Same "solid tinted alert box" pattern already used by --danger-bg
+     (see .form-error) — for the warning-callout on the landing page. */
+  --amber-bg: #2a2013;
   color-scheme: dark;
 }
 
@@ -612,5 +615,60 @@ button:disabled {
   max-width: 700px;
   color: var(--text-muted);
   font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.stats-cards {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.stat-card {
+  min-width: 200px;
+  padding: 1.5rem 1.75rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface-raised);
+}
+
+.stat-value {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-value-accent {
+  color: var(--mint);
+}
+
+.stat-label {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.warning-callout {
+  margin-top: 1.5rem;
+  padding: 1.75rem;
+  border: 1px solid var(--amber);
+  border-radius: 18px;
+  background: var(--amber-bg);
+}
+
+.warning-callout-title {
+  margin: 0;
+  color: var(--amber);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.warning-callout-body {
+  margin: 0.75rem 0 0;
+  max-width: 700px;
+  color: var(--text-muted);
+  font-size: 1rem;
   line-height: 1.6;
 }
