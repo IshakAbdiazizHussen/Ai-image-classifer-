@@ -15,13 +15,19 @@
 // automobile (0.90) and truck (0.92) well ahead of cat (0.65, the lowest
 // of all ten classes) and deer (0.71) — vehicles genuinely score higher
 // than animals here, and cat genuinely is the hardest class.
+//
+// "in ten" below uses a non-breaking space — the title's clamp() is
+// tuned so the whole first sentence fits on one line from 320px up, but
+// this guarantees "in ten" specifically can never get split across a
+// wrap on its own, regardless of device/font differences the tuning
+// didn't cover.
 export function HonestStats() {
   return (
     <section id="honest-stats" className="honest-stats-section">
       <div className="honest-stats-inner">
         <p className="section-eyebrow">Honest stats</p>
         <h2 className="honest-stats-title">
-          It is right about eight times in ten.
+          It is right about eight times in ten.
           <br />
           Here&apos;s one of the misses.
         </h2>
