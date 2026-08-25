@@ -34,9 +34,8 @@ export function HonestStats() {
           <div className="honest-stats-left">
             <p className="section-eyebrow">Honest stats</p>
             <h2 className="honest-stats-title">
-              It is right about eight times in ten.
-              <br />
-              Here&apos;s one of the misses.
+              It is right about eight times in ten. Here&apos;s one of the
+              misses.
             </h2>
             <p className="honest-stats-subtitle">
               Measured on 600 images the model never saw during training.
