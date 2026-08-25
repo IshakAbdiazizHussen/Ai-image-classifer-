@@ -9,7 +9,13 @@ import { AccuracyByCategory } from "@/components/AccuracyByCategory";
 // .env), not copied verbatim from the reference:
 //   - "nine times in ten" (90%) -> real test_accuracy is 0.7817 (~78%).
 //     Rounded to "eight times in ten", which is what 78% actually is.
-//   - "10,000 images" -> num_test_samples is 600, not 10,000.
+//   - "10,000 images": num_test_samples in evaluation_report.json is
+//     actually 600 (confirmed against ml/data/splits/manifest.json too —
+//     this project only ever sampled 300 images/class = 3,000 total, not
+//     full CIFAR-10's 60k). Flagged this to the user with both sources
+//     shown; they explicitly said to use 10,000 anyway, so that's what's
+//     below — just noting here that it's a known, deliberate mismatch
+//     with the real eval data, not an unverified claim slipping through.
 //   - "Here is the tenth" was a pun on the 90% framing; doesn't hold once
 //     the number is corrected, so it's rephrased rather than left
 //     inconsistent with the corrected headline.
@@ -39,7 +45,7 @@ export function HonestStats() {
               misses.
             </h2>
             <p className="honest-stats-subtitle">
-              Measured on 600 images the model never saw during training.
+              Measured on 10,000 images the model never saw during training.
               Vehicles are easier than animals on average — they have hard
               edges and consistent shapes. Animals are harder, and deer is
               the hardest of all.
