@@ -653,8 +653,8 @@ button:disabled {
 .warning-callout {
   /* Capped instead of stretching the full 1280px row — the two stat
      cards above span ~420px (200px each + 20px gap), so this is sized to
-     sit just a bit past that, not the full section width. */
-  max-width: 540px;
+     sit past that, not the full section width. */
+  max-width: 680px;
   margin-top: 1.5rem;
   padding: 1.75rem;
   border: 1px solid var(--amber);
