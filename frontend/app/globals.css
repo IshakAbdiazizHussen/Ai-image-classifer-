@@ -397,10 +397,17 @@ button:disabled {
   border-color: var(--text-muted);
 }
 
+/* Padding lives here, on the full-width outer section — matching the
+   nav's structure (.landing-nav / .landing-nav-inner) — rather than on
+   the max-width element itself, so the 1280px cap isn't eaten into by
+   its own padding and cards end up narrower than the nav above them. */
 .examples-section {
+  padding: 0 2rem 5rem;
+}
+
+.examples-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 2rem 5rem;
 }
 
 .examples-grid {

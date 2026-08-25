@@ -27,21 +27,23 @@ const EXAMPLES = [
 export function ExampleCards() {
   return (
     <section className="examples-section">
-      <div className="examples-grid">
-        {EXAMPLES.map((example) => (
-          <div className="example-card" key={example.label}>
-            <div className="example-card-image" aria-hidden="true" />
-            <div className="example-card-row">
-              <span className="example-card-label">{example.label}</span>
-              <span className={`example-card-confidence tier-${example.tier}`}>
-                {example.confidence}
-              </span>
+      <div className="examples-inner">
+        <div className="examples-grid">
+          {EXAMPLES.map((example) => (
+            <div className="example-card" key={example.label}>
+              <div className="example-card-image" aria-hidden="true" />
+              <div className="example-card-row">
+                <span className="example-card-label">{example.label}</span>
+                <span className={`example-card-confidence tier-${example.tier}`}>
+                  {example.confidence}
+                </span>
+              </div>
+              <p className="example-card-caption">{example.caption}</p>
             </div>
-            <p className="example-card-caption">{example.caption}</p>
-          </div>
-        ))}
+          ))}
+        </div>
+        <p className="examples-note">placeholder — drop three real example images here</p>
       </div>
-      <p className="examples-note">placeholder — drop three real example images here</p>
     </section>
   );
 }
