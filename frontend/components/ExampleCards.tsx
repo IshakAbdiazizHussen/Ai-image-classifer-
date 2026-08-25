@@ -16,6 +16,11 @@ const EXAMPLES = [
   {
     label: "cat",
     image: "/Cat.jpeg",
+    // Cat.jpeg is a tall portrait crop (480x720) — object-fit:cover's
+    // default center position cropped the face out entirely, leaving
+    // just the body. Tried a few values against the live render; "top"
+    // is the one that keeps ears/eyes/whiskers fully in frame.
+    imagePosition: "top",
     confidence: "54.3%",
     tier: "mid",
     caption: "Not sure — dog was close behind at 41.8%.",
@@ -42,7 +47,10 @@ export function ExampleCards() {
                   alt={`Example ${example.label} photo`}
                   fill
                   sizes="(max-width: 800px) 100vw, 33vw"
-                  style={{ objectFit: "cover" }}
+                  style={{
+                    objectFit: "cover",
+                    objectPosition: "imagePosition" in example ? example.imagePosition : "center",
+                  }}
                 />
               </div>
               <div className="example-card-row">
