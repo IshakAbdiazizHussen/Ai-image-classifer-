@@ -7,8 +7,7 @@ import { Footer } from "@/components/Footer";
 
 // Marketing landing page at "/". Deliberately outside the (app) route
 // group's layout — it uses LandingNav instead of the "Classify"/"History"
-// app header. Note: LandingNav's "Under the hood" link still points to
-// #under-the-hood, with no matching section yet.
+// app header.
 export default function LandingPage() {
   return (
     <>
