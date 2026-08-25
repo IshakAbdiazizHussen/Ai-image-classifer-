@@ -580,7 +580,7 @@ button:disabled {
    element) — keeps it exactly as wide/aligned as .landing-nav-inner,
    .examples-inner, and .section-band-inner. */
 .honest-stats-section {
-  padding: 5rem 2rem;
+  padding: 7.5rem 2rem 5rem;
 }
 
 .honest-stats-inner {
