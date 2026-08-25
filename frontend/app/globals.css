@@ -572,3 +572,39 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* Padding on the outer section, not .honest-stats-inner (the max-width
+   element) — keeps it exactly as wide/aligned as .landing-nav-inner,
+   .examples-inner, and .section-band-inner. */
+.honest-stats-section {
+  padding: 5rem 2rem;
+}
+
+.honest-stats-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.section-eyebrow {
+  margin: 0;
+  color: var(--mint);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.honest-stats-title {
+  margin: 1rem 0 0;
+  max-width: 900px;
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--text);
+}
+
+.honest-stats-subtitle {
+  margin: 1.25rem 0 0;
+  max-width: 700px;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
