@@ -14,6 +14,10 @@
   --mint-ink: #06120c;
   --mint-soft-bg: rgba(52, 211, 153, 0.08);
   --mint-soft-border: rgba(52, 211, 153, 0.35);
+  /* Confidence-tier colors for the landing page's ExampleCards — amber is
+     new, high/low reuse --mint/--danger since they're already the right
+     green/red for this. */
+  --amber: #f0b429;
   color-scheme: dark;
 }
 
@@ -391,4 +395,89 @@ button:disabled {
 
 .hero-cta-secondary:hover {
   border-color: var(--text-muted);
+}
+
+.examples-section {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem 5rem;
+}
+
+.examples-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.example-card {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+/* Diagonal-stripe placeholder swatch, standing in for a real example
+   image — matches the reference exactly (it labels this a placeholder
+   too, not a real prediction screenshot). */
+.example-card-image {
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  margin-bottom: 1.25rem;
+  background-color: #1c2028;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.04) 0 10px,
+    rgba(255, 255, 255, 0.08) 10px 20px
+  );
+}
+
+.example-card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.example-card-label {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.example-card-confidence {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 1.05rem;
+}
+
+.example-card-confidence.tier-high {
+  color: var(--mint);
+}
+
+.example-card-confidence.tier-mid {
+  color: var(--amber);
+}
+
+.example-card-confidence.tier-low {
+  color: var(--danger);
+}
+
+.example-card-caption {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.examples-note {
+  margin: 2.5rem 0 0;
+  text-align: center;
+  font-family: var(--font-geist-mono), monospace;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 800px) {
+  .examples-grid {
+    grid-template-columns: 1fr;
+  }
 }
