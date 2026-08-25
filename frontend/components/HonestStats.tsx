@@ -13,13 +13,14 @@ import { AccuracyByCategory } from "@/components/AccuracyByCategory";
 //   - "Here is the tenth" was a pun on the 90% framing; doesn't hold once
 //     the number is corrected, so it's rephrased rather than left
 //     inconsistent with the corrected headline.
-//   - "cats are the hardest of all" is DROPPED (was here in an earlier
-//     pass, justified via per-class F1 where cat is lowest). Now that
-//     AccuracyByCategory shows the real per-class *accuracy* breakdown,
-//     deer is actually the weakest class by that metric (60%, vs cat's
-//     73%) — keeping the cat claim here would visibly contradict the
-//     chart right next to it. "Vehicles are easier than animals on
-//     average" still checks out (83.8% vs 74.4% mean recall) and is kept.
+//   - "cats are the hardest of all" -> changed to "deer is the hardest
+//     of all". The reference's cat claim came from per-class F1 (cat is
+//     lowest there, 0.647), but AccuracyByCategory right next to this
+//     text shows per-class *accuracy*, where deer is the real weakest
+//     (60%, vs cat's 73%) — keeping "cats" here would directly contradict
+//     the chart it sits beside, so it's swapped to match. "Vehicles are
+//     easier than animals on average" still checks out (83.8% vs 74.4%
+//     mean recall) and is kept as-is.
 //
 // "in ten" below uses a non-breaking space — the title's clamp() is
 // tuned so the whole first sentence fits on one line from 320px up, but
@@ -40,7 +41,8 @@ export function HonestStats() {
             <p className="honest-stats-subtitle">
               Measured on 600 images the model never saw during training.
               Vehicles are easier than animals on average — they have hard
-              edges and consistent shapes.
+              edges and consistent shapes. Animals are harder, and deer is
+              the hardest of all.
             </p>
 
             <div className="stats-cards">
