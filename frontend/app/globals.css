@@ -7,6 +7,11 @@
   --accent: #5b9dff;
   --danger: #ff6b6b;
   --danger-bg: #2a1417;
+  /* Mint accent used only by the landing page nav (LandingNav) — kept
+     separate from --accent (the app's own blue) since the reference
+     design's brand/CTA color is a distinct green, not blue. */
+  --mint: #34d399;
+  --mint-ink: #06120c;
   color-scheme: dark;
 }
 
@@ -217,4 +222,53 @@ button:disabled {
   margin-top: 1rem;
   font-size: 0.9rem;
   color: var(--text-muted);
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 3rem;
+}
+
+.landing-nav-brand {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.landing-nav-brand-accent {
+  color: var(--mint);
+}
+
+.landing-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+}
+
+.landing-nav-links a {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.landing-nav-links a:hover {
+  color: var(--text);
+}
+
+.landing-nav-cta {
+  display: inline-block;
+  padding: 0.7rem 1.6rem;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--mint-ink);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.landing-nav-cta:hover {
+  filter: brightness(1.05);
 }
