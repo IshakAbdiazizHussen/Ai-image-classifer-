@@ -185,16 +185,146 @@ body {
   background: var(--surface);
 }
 
-.upload-field {
+/* Visually hidden but still in the accessibility tree and tab-focusable
+   (not display:none/opacity:0) — the dropzone <label> wrapping it is
+   what's actually clicked/dragged onto; this is the real file input that
+   does the work, matching upload-field's original label+input pattern. */
+.upload-input-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dropzone {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  font-size: 0.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3.5rem 1.5rem;
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dropzone:hover {
+  border-color: var(--text-muted);
+}
+
+.dropzone-active {
+  border-color: var(--mint);
+  background: var(--mint-soft-bg);
+  transform: scale(1.01);
+}
+
+.dropzone-icon {
   color: var(--text-muted);
 }
 
-.upload-field input {
+.dropzone-primary {
+  margin: 0;
   color: var(--text);
+  font-weight: 600;
+}
+
+.dropzone-secondary {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.upload-preview {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.upload-preview-thumb {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.upload-preview-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.upload-preview-name {
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.upload-preview-size {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.upload-preview-remove {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upload-preview-remove:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+/* Green accent (matching the navbar's "Upload an image" CTA), overriding
+   the app-wide blue `button` rule for this one button only — disabled
+   state is deliberately gray, not a dimmed green, so it reads as
+   inactive rather than just faded. */
+.upload-submit {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--mint-ink);
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.upload-submit:disabled {
+  background: var(--border);
+  border-color: var(--border);
+  color: var(--text-muted);
 }
 
 button {
