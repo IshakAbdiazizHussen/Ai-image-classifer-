@@ -22,10 +22,10 @@ export function LandingNav() {
         </nav>
 
         <div className="landing-nav-actions">
-          <ThemeToggle />
           <Link href="/upload" className="landing-nav-cta">
             Upload an image
           </Link>
+          <ThemeToggle />
         </div>
       </div>
     </header>

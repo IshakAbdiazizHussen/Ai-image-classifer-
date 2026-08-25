@@ -50,12 +50,14 @@
   --swatch-bg: #1c2028;
   --swatch-stripe-1: rgba(255, 255, 255, 0.04);
   --swatch-stripe-2: rgba(255, 255, 255, 0.08);
-  /* ThemeToggle's knob — deliberately the same in both themes (a plain
-     white circle with a dark icon), same reasoning as an iOS-style
-     switch knob: it reads clearly against the track regardless of which
-     mode is active. */
-  --toggle-thumb-bg: #ffffff;
-  --toggle-thumb-fg: #0b0d10;
+  /* ThemeToggle's circular button — a translucent overlay on the navbar
+     background (not a flat surface token) so it reads as "slightly
+     lighter than what's behind it" in either theme, whatever that
+     happens to be. */
+  --toggle-bg: rgba(255, 255, 255, 0.08);
+  --toggle-bg-hover: rgba(255, 255, 255, 0.14);
+  --toggle-border: rgba(255, 255, 255, 0.14);
+  --toggle-border-hover: rgba(255, 255, 255, 0.26);
   color-scheme: dark;
 }
 
@@ -82,8 +84,10 @@
   --swatch-bg: #eceef1;
   --swatch-stripe-1: rgba(0, 0, 0, 0.04);
   --swatch-stripe-2: rgba(0, 0, 0, 0.08);
-  --toggle-thumb-bg: #ffffff;
-  --toggle-thumb-fg: #0b0d10;
+  --toggle-bg: rgba(11, 13, 16, 0.04);
+  --toggle-bg-hover: rgba(11, 13, 16, 0.08);
+  --toggle-border: rgba(11, 13, 16, 0.12);
+  --toggle-border-hover: rgba(11, 13, 16, 0.22);
   color-scheme: light;
 }
 
@@ -857,46 +861,56 @@ button:disabled {
   gap: 1rem;
 }
 
+/* Circular icon button — width/height/border-radius:50% make it a true
+   circle regardless of content, sized to roughly match the CTA button's
+   own height so the two align cleanly side by side. */
 .theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
   padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
+  border-radius: 50%;
+  background: var(--toggle-bg);
+  border: 1px solid var(--toggle-border);
   /* Overrides the app-wide `button { color: var(--accent-ink) }` base
-     rule — this control isn't an accent-filled button. */
-  color: inherit;
+     rule — the icon isn't on an accent fill, it wants the soft
+     muted-gray tone requested (not the green brand accent). */
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--toggle-bg-hover);
+  border-color: var(--toggle-border-hover);
 }
 
 .theme-toggle-placeholder {
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
 }
 
-.theme-toggle-track {
+.theme-toggle-icon {
   display: flex;
-  align-items: center;
-  width: 44px;
-  height: 24px;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--border);
-  transition: background-color 0.3s ease;
+  animation: theme-toggle-icon-in 0.3s ease;
 }
 
-.theme-toggle-thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: var(--toggle-thumb-bg);
-  color: var(--toggle-thumb-fg);
-  transform: translateX(0);
-  transition: transform 0.25s ease;
-}
-
-.theme-toggle[aria-checked="true"] .theme-toggle-thumb {
-  transform: translateX(20px);
+/* Rotate + scale + fade in on every icon swap — key={theme} in
+   ThemeToggle.tsx remounts this span each click, which replays the
+   animation (a plain CSS transition can't animate a value with no
+   "before" state on a fresh element, an animation can). */
+@keyframes theme-toggle-icon-in {
+  from {
+    transform: rotate(-90deg) scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
 }

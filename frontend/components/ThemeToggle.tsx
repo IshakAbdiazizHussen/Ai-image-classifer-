@@ -14,9 +14,9 @@ function applyTheme(theme: Theme) {
   }
 }
 
-// Pill switch in LandingNav, just left of the "Upload an image" button.
-// The actual initial theme is decided before this ever mounts, by the
-// inline beforeInteractive script in layout.tsx (localStorage, else OS
+// Circular icon button in LandingNav, right of "Upload an image". The
+// actual initial theme is decided before this ever mounts, by the inline
+// beforeInteractive script in layout.tsx (localStorage, else OS
 // prefers-color-scheme, else dark) — this component only reflects and
 // toggles document.documentElement.dataset.theme, it never guesses a
 // value of its own.
@@ -56,24 +56,26 @@ export function ThemeToggle() {
       aria-label={isLight ? "Switch to dark mode" : "Switch to light mode"}
       onClick={toggle}
     >
-      <span className="theme-toggle-track">
-        <span className="theme-toggle-thumb">
-          {isLight ? (
-            <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
-              <circle cx="12" cy="12" r="4.5" fill="currentColor" />
-              <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" />
-              </g>
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true">
-              <path
-                fill="currentColor"
-                d="M20.5 14.4A8.5 8.5 0 1 1 9.6 3.5a7 7 0 0 0 10.9 10.9Z"
-              />
-            </svg>
-          )}
-        </span>
+      {/* key={theme} forces a remount on every toggle, which replays the
+          CSS entrance animation (rotate + scale + fade) defined on
+          .theme-toggle-icon — that's what gives the swap its motion,
+          rather than an abrupt icon swap. */}
+      <span className="theme-toggle-icon" key={theme}>
+        {isLight ? (
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5" fill="currentColor" />
+            <g stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12H5M19 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" />
+            </g>
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M20.5 14.4A8.5 8.5 0 1 1 9.6 3.5a7 7 0 0 0 10.9 10.9Z"
+            />
+          </svg>
+        )}
       </span>
     </button>
   );
