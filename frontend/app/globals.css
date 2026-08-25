@@ -480,3 +480,31 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* Full-bleed elevated band (reuses --surface, the same "raised panel"
+   color already used for cards elsewhere) that section headers like
+   "Four steps, start to finish" sit on, breaking up the plain --bg used
+   everywhere above it. */
+.section-band {
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 4rem 2rem;
+}
+
+.section-band-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.section-band-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 800;
+  color: var(--text);
+}
+
+.section-band-subtitle {
+  margin: 0.75rem 0 0;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}

@@ -1,19 +1,21 @@
 import { LandingNav } from "@/components/LandingNav";
 import { Hero } from "@/components/Hero";
 import { ExampleCards } from "@/components/ExampleCards";
+import { HowItWorks } from "@/components/HowItWorks";
 
 // Marketing landing page at "/". Deliberately outside the (app) route
 // group's layout — it uses LandingNav instead of the "Classify"/"History"
-// app header. Note: LandingNav's "How it works" / "Honest stats" / "Under
-// the hood" links, and the Hero's "See how it performs" link, point to
-// anchors (#how-it-works etc.) with no matching section here yet — still
-// dead anchors below ExampleCards.
+// app header. Note: the Hero's "See how it performs" link, and LandingNav's
+// "Honest stats" / "Under the hood" links, still point to anchors
+// (#honest-stats, #under-the-hood) with no matching section yet —
+// "How it works" is now wired up via HowItWorks below.
 export default function LandingPage() {
   return (
     <>
       <LandingNav />
       <Hero />
       <ExampleCards />
+      <HowItWorks />
     </>
   );
 }
