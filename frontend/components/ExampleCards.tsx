@@ -1,23 +1,28 @@
-// Landing-page "example predictions" strip, placed under Hero. Matches the
-// supplied reference exactly, including its own "placeholder" caption —
-// these are mockup numbers/captions from the reference, not real inference
-// output. Swap in real predictions (and drop the caption below) when real
-// example images are wired in.
+import Image from "next/image";
+
+// Landing-page "example predictions" strip, placed under Hero. Copy/numbers
+// still match the reference's own mockup values (not real inference
+// output — see the earlier note this section shipped with). Images are
+// real photos now (public/Ship.jpeg, Cat.jpeg, Frog.jpeg), replacing the
+// diagonal-stripe placeholder swatch.
 const EXAMPLES = [
   {
     label: "ship",
+    image: "/Ship.jpeg",
     confidence: "98.1%",
     tier: "high",
     caption: "Confident. Runner-up was airplane at 1.2%.",
   },
   {
     label: "cat",
+    image: "/Cat.jpeg",
     confidence: "54.3%",
     tier: "mid",
     caption: "Not sure — dog was close behind at 41.8%.",
   },
   {
     label: "frog",
+    image: "/Frog.jpeg",
     confidence: "31.0%",
     tier: "low",
     caption: "A guess. This image is outside the ten categories.",
@@ -31,7 +36,15 @@ export function ExampleCards() {
         <div className="examples-grid">
           {EXAMPLES.map((example) => (
             <div className="example-card" key={example.label}>
-              <div className="example-card-image" aria-hidden="true" />
+              <div className="example-card-image">
+                <Image
+                  src={example.image}
+                  alt={`Example ${example.label} photo`}
+                  fill
+                  sizes="(max-width: 800px) 100vw, 33vw"
+                  style={{ objectFit: "cover" }}
+                />
+              </div>
               <div className="example-card-row">
                 <span className="example-card-label">{example.label}</span>
                 <span className={`example-card-confidence tier-${example.tier}`}>

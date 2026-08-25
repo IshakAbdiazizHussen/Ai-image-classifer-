@@ -505,19 +505,18 @@ button:disabled {
   background: var(--surface);
 }
 
-/* Diagonal-stripe placeholder swatch, standing in for a real example
-   image — matches the reference exactly (it labels this a placeholder
-   too, not a real prediction screenshot). */
+/* Real example photo now (public/Ship.jpeg, Cat.jpeg, Frog.jpeg) via
+   next/image with `fill`, which requires this to be the positioned
+   container it fills — overflow:hidden clips it to the rounded corners.
+   background-color is what's visible for the instant before the image
+   itself has loaded in. */
 .example-card-image {
+  position: relative;
+  overflow: hidden;
   aspect-ratio: 16 / 9;
   border-radius: 12px;
   margin-bottom: 1.25rem;
   background-color: var(--swatch-bg);
-  background-image: repeating-linear-gradient(
-    45deg,
-    var(--swatch-stripe-1) 0 10px,
-    var(--swatch-stripe-2) 10px 20px
-  );
 }
 
 .example-card-row {
@@ -913,4 +912,33 @@ button:disabled {
     transform: rotate(0deg) scale(1);
     opacity: 1;
   }
+}
+
+/* Padding lives on the full-width outer element, not .landing-footer-inner
+   (the max-width one) — same reasoning as .landing-nav/.examples-section:
+   padding on the capped element eats into its own max-width and makes it
+   narrower/misaligned versus the nav and sections above it. */
+.landing-footer {
+  border-top: 1px solid var(--border);
+  padding: 1.5rem 2rem;
+}
+
+.landing-footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.landing-footer-brand {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.landing-footer-credit {
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
