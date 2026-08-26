@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 
 COPY backend/ backend/
 COPY ml/__init__.py ml/preprocessing.py ml/
+COPY ml/artifacts/ ml/artifacts/
 
 # The promoted model artifact (ml/artifacts/) is bind-mounted read-only
 # at runtime, not baked in here — see docker-compose.yml. That's what

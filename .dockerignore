@@ -18,3 +18,4 @@ ml/artifacts/
 .env
 *.env
 !.env.example
+!ml/artifacts/20260824T143019Z/
