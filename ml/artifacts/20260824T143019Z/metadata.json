@@ -1,0 +1,33 @@
+{
+  "version": "20260824T143019Z",
+  "source_checkpoint": "ml/checkpoints/20260824T142716Z/checkpoint.pt",
+  "classes": [
+    "airplane",
+    "automobile",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck"
+  ],
+  "backbone": "mobilenet_v3_small",
+  "image_size": 224,
+  "preprocessing": {
+    "resize": 255,
+    "center_crop": 224,
+    "mean": [
+      0.485,
+      0.456,
+      0.406
+    ],
+    "std": [
+      0.229,
+      0.224,
+      0.225
+    ]
+  },
+  "exported_at": "2026-08-24T14:30:23.004479+00:00"
+}
